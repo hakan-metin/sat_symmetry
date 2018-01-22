@@ -1,0 +1,63 @@
+// Copyright 2017 Hakan Metin - LIP6
+
+#include "cosy/Group.h"
+
+namespace cosy {
+
+Group::Group() {
+}
+
+Group::~Group() {
+}
+
+void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
+    CHECK_NOTNULL(permutation);
+
+    const unsigned int permutation_index = _permutations.size();
+    const unsigned int num_cycles = permutation->numberOfCycles();
+
+    if (num_cycles == 0)
+        return;
+
+    if (permutation->size() > _watchers.size())
+        _watchers.resize(permutation->size());
+
+    for (unsigned int c = 0; c < num_cycles; ++c) {
+        Literal element = permutation->lastElementInCycle(c);
+
+        for (const Literal& image : permutation->cycle(c)) {
+            const int index = image.variable().value();
+            _watchers[index].insert(permutation_index);
+
+            const BooleanVariable variable = image.variable();
+            _symmetric.insert(variable);
+
+            if (element == image.negated())
+                _inverting.insert(variable);
+
+            element = image;
+        }
+
+    }
+
+    _permutations.emplace_back(permutation.release());
+}
+
+Group::Iterator Group::watch(BooleanVariable variable) const {
+    const int index = variable.value();
+    return Iterator(_watchers[index].begin(), _watchers[index].end());
+}
+
+void Group::summarize() const {
+}
+
+
+}  // namespace cosy
+
+
+/*
+ * Local Variables:
+ * mode: c++
+ * indent-tabs-mode: nil
+ * End:
+ */
