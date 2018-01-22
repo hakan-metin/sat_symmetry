@@ -1,6 +1,7 @@
 // Copyright 2017 Hakan Metin - LIP6
 
 #include "cosy/Group.h"
+#include "cosy/Printer.h"
 
 namespace cosy {
 
@@ -37,7 +38,6 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
 
             element = image;
         }
-
     }
 
     _permutations.emplace_back(permutation.release());
@@ -48,7 +48,12 @@ Group::Iterator Group::watch(BooleanVariable variable) const {
     return Iterator(_watchers[index].begin(), _watchers[index].end());
 }
 
-void Group::summarize() const {
+void Group::summarize(unsigned int num_vars) const {
+    Printer::printStat("Number of generators", numberOfPermutations());
+    Printer::printStat("Number of vars in generators",
+                       numberOfSymmetricVariables(),
+                       static_cast<int64>(num_vars));
+    Printer::printStat("Number of inverting", numberOfInverting());
 }
 
 

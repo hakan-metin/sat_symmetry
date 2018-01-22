@@ -25,6 +25,8 @@ class CosyManager {
     void updateNotify(const Literal& literal, ClauseInjector *injector);
     void updateCancel(const Literal& literal);
 
+    void summarize() const;
+
  private:
     const Group& _group;
     const Assignment& _assignment;

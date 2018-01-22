@@ -62,4 +62,11 @@ void CosyManager::updateCancel(const Literal& literal) {
     }
 }
 
+void CosyManager::summarize() const {
+    Printer::printStat("Variable Order", _order->variableModeString());
+    Printer::printStat("Value Order", _order->valueModeString());
+    Printer::printStat("Order", _order->preview());
+}
+
+
 }  // namespace cosy

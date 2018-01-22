@@ -78,33 +78,19 @@ inline SymmetryController<T>::SymmetryController(
         LOG(ERROR) << "Saucy file " << sym_filename << " is not well formed.";
 
     _assignment.resize(_num_vars);
-
-    _cnf_model_stats.summarize();
-
 }
 
 template<class T>
 inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
+    if (_group.numberOfPermutations() == 0)
+        return;
+
     std::unique_ptr<Order> order
         (OrderFactory::create(vars, value, _cnf_model_stats, _group));
     CHECK_NOTNULL(order);
 
     _cosy_manager = std::unique_ptr<CosyManager>
         (new CosyManager(_group, _assignment));
-
-    Printer::printSection(" Symmetry Informations ");
-
-    Printer::printStat("Variable Order", order->variableModeString());
-    Printer::printStat("Value Order", order->valueModeString());
-    Printer::printStat("Order", order->preview());
-
-    Printer::printStat("Number of generators", _group.numberOfPermutations());
-    Printer::printStat("Number of vars in generators",
-                       _group.numberOfSymmetricVariables(),
-                       static_cast<int64>(_num_vars));
-    Printer::printStat("Number of inverting", _group.numberOfInverting());
-
-
 
     _cosy_manager->defineOrder(std::move(order));
     _cosy_manager->generateUnits(&_injector);
@@ -175,7 +161,12 @@ SymmetryController<T>::printStats() const {
 
 template<class T> inline void
 SymmetryController<T>::printInfo() const {
+    _cnf_model_stats.summarize();
     Printer::printSection(" Symmetry Information ");
+    _group.summarize(_num_vars);
+    if (_cosy_manager)
+        _cosy_manager->summarize();
+
 
 }
 

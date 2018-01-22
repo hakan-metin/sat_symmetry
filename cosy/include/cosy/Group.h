@@ -29,7 +29,7 @@ class Group {
     int64 numberOfSymmetricVariables() const { return _symmetric.size(); }
     int64 numberOfInverting() const { return _inverting.size(); }
 
-    void summarize() const;
+    void summarize(unsigned int num_vars) const;
  private:
     std::vector< std::unique_ptr<Permutation> > _permutations;
     std::unordered_set<BooleanVariable> _symmetric;
