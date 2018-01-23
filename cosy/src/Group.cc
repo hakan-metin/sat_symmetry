@@ -20,6 +20,10 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
     if (num_cycles == 0)
         return;
 
+    if (isPermutationSpurious(permutation))
+        return;
+
+
     if (permutation->size() > _watchers.size())
         _watchers.resize(permutation->size());
 
@@ -46,6 +50,23 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
 Group::Iterator Group::watch(BooleanVariable variable) const {
     const int index = variable.value();
     return Iterator(_watchers[index].begin(), _watchers[index].end());
+}
+
+bool Group::isPermutationSpurious(const std::unique_ptr<Permutation>& p) const {
+    const unsigned int num_cycles = p->numberOfCycles();
+    for (unsigned int c = 0; c < num_cycles; ++c) {
+        for (const Literal& element : p->cycle(c)) {
+
+            if (p->isTrivialImage(element))
+                return true;
+            if (p->isTrivialImage(element.negated()))
+                return true;
+            if (p->imageOf(element).negated() != p->imageOf(element.negated()))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 void Group::summarize(unsigned int num_vars) const {

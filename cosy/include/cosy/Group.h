@@ -25,6 +25,8 @@ class Group {
         return _permutations;
     }
 
+    bool isPermutationSpurious(const std::unique_ptr<Permutation>& p) const;
+
     int64 numberOfPermutations() const { return _permutations.size(); }
     int64 numberOfSymmetricVariables() const { return _symmetric.size(); }
     int64 numberOfInverting() const { return _inverting.size(); }
@@ -35,6 +37,8 @@ class Group {
     std::unordered_set<BooleanVariable> _symmetric;
     std::unordered_set<BooleanVariable> _inverting;
     std::vector< std::unordered_set<int> > _watchers;
+
+
 };
 
 struct Group::Iterator {
