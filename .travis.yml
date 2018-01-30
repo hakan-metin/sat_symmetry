@@ -8,6 +8,6 @@ matrix:
       compiler: gcc
 
 script:
-  - ./scripts/build_gtest.sh
+  - make third_party
   - make run-test
   - make check-style
