@@ -10,3 +10,4 @@ matrix:
 script:
   - ./scripts/build_gtest.sh
   - make run-test
+  - make check-style

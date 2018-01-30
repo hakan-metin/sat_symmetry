@@ -26,6 +26,16 @@ CFLAGS += -Iinclude/ -fPIC -Wall -Wextra
 default: CFLAGS += -O3 -DNDEBUG
 default: $(LIB)$(lib)
 
+gtest:
+	$(call cmd-call, ./scripts/build_gtest.sh)
+
+bliss:
+	$(MAKE) -C include/bliss/ lib
+
+clean:
+	$(MAKE) -C include/bliss/ clean
+
+third_party: bliss gtest
 
 ################################################################################
 # TESTS
