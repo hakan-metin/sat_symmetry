@@ -32,7 +32,7 @@ gtest:
 bliss:
 	$(MAKE) -C include/bliss/ lib
 
-clean:
+clean-bliss:
 	$(MAKE) -C include/bliss/ clean
 
 third_party: bliss gtest
