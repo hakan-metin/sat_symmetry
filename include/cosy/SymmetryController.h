@@ -19,6 +19,7 @@
 #include "cosy/Printer.h"
 #include "cosy/SaucyReader.h"
 #include "cosy/BlissSymmetryFinder.h"
+#include "cosy/SaucySymmetryFinder.h"
 
 namespace cosy {
 
@@ -83,10 +84,18 @@ inline SymmetryController<T>::SymmetryController(
     //     LOG(ERROR) << "Saucy file " << sym_filename <<
     // " is not well formed.";
 
+    std::cout << "BLISS AUTOMORPHISM" << std::endl;
     _symmetry_finder = std::unique_ptr<BlissSymmetryFinder>
         (new BlissSymmetryFinder(_cnf_model));
-
     _symmetry_finder->findAutomorphism(&_group);
+
+    _group.debugPrint();
+
+    std::cout << "SAUCY AUTOMORPHISM" << std::endl;
+    _symmetry_finder = std::unique_ptr<SaucySymmetryFinder>
+        (new SaucySymmetryFinder(_cnf_model));
+    _symmetry_finder->findAutomorphism(&_group);
+
     _group.debugPrint();
 
     _assignment.resize(_num_vars);
