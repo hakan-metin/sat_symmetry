@@ -2,6 +2,11 @@ language: cpp
 dist: trusty
 sudo: false
 
+addons:
+  apt:
+    packages:
+      - valgrind
+
 matrix:
   include:
     - os: linux
