@@ -2,15 +2,10 @@ language: cpp
 dist: trusty
 sudo: false
 
-
 addons:
   apt:
-    sources:
-    - ubuntu-toolchain-r-test
     packages:
-    - gcc-5
-    - g++-5
-    - valgrind
+      - valgrind
 
 matrix:
   include:

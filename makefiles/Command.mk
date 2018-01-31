@@ -91,7 +91,7 @@ endef
 # Arg4 = addition flags
 define cmd-cxx
   $(call cmd-echo,  CCXX    $(strip $(call cmd-format, $(1))))
-  $(Q)g++ $(COMMON-FLAGS) -std=c++14 -c $(2) -o $(1) $(3)
+  $(Q)g++ $(COMMON-FLAGS) -std=gnu++11 -c $(2) -o $(1) $(3)
 endef
 
 # Compile a C source file into on object file (.o)
@@ -116,7 +116,7 @@ endef
 
 define cmd-cxx-bin
   $(call cmd-echo, CCXXBIN  $(strip $(call cmd-format, $(1))))
-  $(Q)g++ $(COMMON-FLAGS) -std=c++14 $(2) -o $(1) $(3)
+  $(Q)g++ $(COMMON-FLAGS) -std=gnu++11 $(2) -o $(1) $(3)
 endef
 
 
