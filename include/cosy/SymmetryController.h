@@ -18,8 +18,7 @@
 #include "cosy/OrderFactory.h"
 #include "cosy/Printer.h"
 #include "cosy/SaucyReader.h"
-#include "cosy/BlissSymmetryFinder.h"
-#include "cosy/SaucySymmetryFinder.h"
+#include "cosy/SymmetryFinder.h"
 
 namespace cosy {
 
@@ -28,6 +27,10 @@ class SymmetryController {
  public:
     SymmetryController(const std::string& cnf_filename,
                        const std::string& symmetry_filename,
+                       const std::unique_ptr<LiteralAdapter<T>>& adapter);
+
+    SymmetryController(const std::string& cnf_filename,
+                       SymmetryFinder::Automorphism tool,
                        const std::unique_ptr<LiteralAdapter<T>>& adapter);
 
     virtual ~SymmetryController() {}
@@ -53,8 +56,6 @@ class SymmetryController {
     CNFModel _cnf_model;
     Assignment _assignment;
     ClauseInjector _injector;
-    std::unique_ptr<SymmetryFinder> _symmetry_finder;
-
     std::unique_ptr<CosyManager> _cosy_manager;
 
     std::vector<T> adaptVector(const std::vector<Literal>& literals);
@@ -78,27 +79,37 @@ inline SymmetryController<T>::SymmetryController(
         LOG(ERROR) << "CNF file " << cnf_filename << " is not well formed.";
 
     _num_vars = _cnf_model.numberOfVariables();
-
-    // success = sym_reader.load(sym_filename, _num_vars, &_group);
-    // if (!success)
-    //     LOG(ERROR) << "Saucy file " << sym_filename <<
-    // " is not well formed.";
-
-    std::cout << "BLISS AUTOMORPHISM" << std::endl;
-    _symmetry_finder = std::unique_ptr<BlissSymmetryFinder>
-        (new BlissSymmetryFinder(_cnf_model));
-    _symmetry_finder->findAutomorphism(&_group);
-
-    _group.debugPrint();
-
-    std::cout << "SAUCY AUTOMORPHISM" << std::endl;
-    _symmetry_finder = std::unique_ptr<SaucySymmetryFinder>
-        (new SaucySymmetryFinder(_cnf_model));
-    _symmetry_finder->findAutomorphism(&_group);
-
-    _group.debugPrint();
-
     _assignment.resize(_num_vars);
+
+    success = sym_reader.load(sym_filename, _num_vars, &_group);
+    if (!success)
+        LOG(ERROR) << "Saucy file " << sym_filename <<
+    " is not well formed.";
+
+}
+
+template<class T>
+inline SymmetryController<T>::SymmetryController(
+                            const std::string& cnf_filename,
+                            SymmetryFinder::Automorphism tool,
+                            const std::unique_ptr<LiteralAdapter<T>>& adapter) :
+    _literal_adapter(adapter),
+    _cosy_manager(nullptr) {
+    bool success;
+    CNFReader cnf_reader;
+
+    success = cnf_reader.load(cnf_filename, &_cnf_model);
+    if (!success)
+        LOG(ERROR) << "CNF file " << cnf_filename << " is not well formed.";
+
+    _num_vars = _cnf_model.numberOfVariables();
+    _assignment.resize(_num_vars);
+
+    std::unique_ptr<SymmetryFinder> symmetry_finder
+        (SymmetryFinder::create(_cnf_model, tool));
+
+    CHECK_NOTNULL(symmetry_finder);
+    symmetry_finder->findAutomorphism(&_group);
 }
 
 template<class T>
