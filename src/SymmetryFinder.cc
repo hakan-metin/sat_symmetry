@@ -10,7 +10,7 @@ namespace cosy {
 SymmetryFinder*
 SymmetryFinder::create(const CNFModel& model,
                        SymmetryFinder::Automorphism tool) {
-    switch(tool) {
+    switch (tool) {
     case BLISS: return new BlissSymmetryFinder(model);
     case SAUCY: return new SaucySymmetryFinder(model);
     default: return nullptr;

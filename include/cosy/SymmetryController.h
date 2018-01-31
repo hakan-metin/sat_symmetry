@@ -83,9 +83,7 @@ inline SymmetryController<T>::SymmetryController(
 
     success = sym_reader.load(sym_filename, _num_vars, &_group);
     if (!success)
-        LOG(ERROR) << "Saucy file " << sym_filename <<
-    " is not well formed.";
-
+        LOG(ERROR) << "Saucy file " << sym_filename << " is not well formed.";
 }
 
 template<class T>
