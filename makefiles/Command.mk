@@ -25,7 +25,7 @@ endef
 
 define cmd-make
   $(call cmd-info,  MAKE    $(strip $(1)))
-  +$(Q)$(MAKE) $(1)
+  +$(Q)$(MAKE) $(1) -C $(2)
 endef
 
 
@@ -47,6 +47,17 @@ define cmd-tags
   $(Q)etags -o $(1) $(2)
 endef
 
+
+# Debug command
+define cmd-valgrind-mem
+  $(call cmd-echo, VALGRIND $(strip $(call cmd-format, $(1))))
+  $(Q)valgrind --leak-check=full $(1)
+endef
+
+define cmd-gdb
+  $(call cmd-echo,  GDB     $(strip $(call cmd-format, $(1))))
+  $(Q)gdb --args $(1)
+endef
 
 
 
