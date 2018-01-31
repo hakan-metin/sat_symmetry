@@ -8,6 +8,7 @@ matrix:
       compiler: gcc
 
 script:
+  - source .env
   - make third_party
   - make run-test
   - make check-style
