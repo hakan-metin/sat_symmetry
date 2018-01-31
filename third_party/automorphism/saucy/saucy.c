@@ -5,7 +5,7 @@
  * by Paul T. Darga <pdarga@umich.edu>
  * and Mark Liffiton <liffiton@umich.edu>
  * and Hadi Katebi <hadik@eecs.umich.edu>
- * 
+ *
  * Copyright (C) 2004, The Regents of the University of Michigan
  * See the LICENSE file for details.
  */
@@ -33,7 +33,7 @@ struct saucy {
 
 	/* Coloring data */
 	struct coloring left, right;
-	int *nextnon;    /* Forward next-nonsingleton pointers */ 
+	int *nextnon;    /* Forward next-nonsingleton pointers */
 	int *prevnon;    /* Backward next-nonsingleton pointers */
 
 	/* Refinement: inducers */
@@ -1309,7 +1309,7 @@ backtrack_bad(struct saucy *s)
 {
 	int min, old, tmp;
 	old = s->lev;
-	min = backtrack_loop(s);	
+	min = backtrack_loop(s);
 	tmp = s->nsplits;
 	s->nsplits = s->splitlev[old];
 	rewind_coloring(s, &s->left, s->lev+1);
@@ -1354,7 +1354,7 @@ do_search(struct saucy *s)
 	/* Keep going while there are tree nodes to expand */
 	while (s->lev) {
 
-		/* Descend to a new leaf node */	
+		/* Descend to a new leaf node */
 		if (descend(s, &s->right, s->start[s->lev], min)
 				&& descend_left(s)) {
 
@@ -1536,14 +1536,14 @@ saucy_search(
 	while (do_search(s));
 }
 
-static int *ints(int n) { return malloc(n * sizeof(int)); }
-static int *zeros(int n) { return calloc(n, sizeof(int)); }
-static char *bits(int n) { return calloc(n, sizeof(char)); }
+static int *ints(int n) { return (int*) malloc(n * sizeof(int)); }
+static int *zeros(int n) { return (int*) calloc(n, sizeof(int)); }
+static char *bits(int n) { return (char*) calloc(n, sizeof(char)); }
 
 struct saucy *
 saucy_alloc(int n)
 {
-	struct saucy *s = malloc(sizeof(struct saucy));
+    struct saucy *s = (struct saucy*) malloc(sizeof(struct saucy));
 	if (s == NULL) return NULL;
 
 	s->ninduce = ints(n);

@@ -7,7 +7,7 @@ libsaucy.a : saucy.o
 	ranlib $@
 
 saucy.o: saucy.c
-	gcc -c -ansi -pedantic -Wall -O3 $< -o $@
+	g++ -c -ansi -pedantic -Wall -O3 $< -o $@
 
 
 clean:
