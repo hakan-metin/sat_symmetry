@@ -17,3 +17,4 @@ script:
   - make third_party
   - make run-test-valgrind
   - make check-style
+  - make examples
