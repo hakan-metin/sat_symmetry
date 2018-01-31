@@ -19,17 +19,26 @@ struct SymmetryFinderInfo {
 
 class SymmetryFinder {
  public:
-    explicit SymmetryFinder(const CNFModel& model) {
-        _num_vars = model.numberOfVariables();
-        _graph.assign(model);
-    }
+    enum Automorphism {
+        BLISS,
+        SAUCY,
+    };
+
     virtual ~SymmetryFinder() {}
 
     virtual void findAutomorphism(Group *group) = 0;
 
+    static SymmetryFinder* create(const CNFModel& model,
+                                  SymmetryFinder::Automorphism tool);
+
  protected:
     unsigned int _num_vars;
     CNFGraph _graph;
+
+    explicit SymmetryFinder(const CNFModel& model) {
+        _num_vars = model.numberOfVariables();
+        _graph.assign(model);
+    }
 };
 
 }  // namespace cosy

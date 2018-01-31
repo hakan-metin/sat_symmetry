@@ -63,6 +63,8 @@ tags:
 MODULES :=
 
 include $(MAKEFILES_DIR)Build.mk
+include $(MAKEFILES_DIR)ThirdParty.mk
+include $(MAKEFILES_DIR)Examples.mk
 
 # Recipe-only rules
 

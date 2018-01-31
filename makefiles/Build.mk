@@ -11,8 +11,8 @@ tests_objects += $(objects)
 
 lib := libcosy.a
 
-$(call REQUIRE-DIR,  $(LIB)$(lib))
-$(call REQUIRE-DIR,  $(BIN)test)
+$(call REQUIRE-DIR, $(LIB)$(lib))
+$(call REQUIRE-DIR, $(BIN)test)
 $(call REQUIRE-DIR, $(objects))
 $(call REQUIRE-DIR, $(tests_objects))
 $(call REQUIRE-DEP, $(sources))
@@ -26,34 +26,19 @@ CFLAGS += -Iinclude/ -fPIC -Wall -Wextra
 default: CFLAGS += -O3 -DNDEBUG
 default: $(LIB)$(lib)
 
-gtest:
-	$(call cmd-call, ./scripts/build_gtest.sh)
-
-bliss:
-	$(MAKE) -C include/bliss/ lib
-
-clean-bliss:
-	$(MAKE) -C include/bliss/ clean
-
-third_party: bliss gtest
-
 ################################################################################
 # TESTS
 
-GTEST_DIR = third_party/gtest/googletest/
-
-test : CFLAGS  +=  -I $(GTEST_DIR)include/ -O0 -D DEBUG -g
-test : LDFLAGS +=  -L $(GTEST_DIR) -lgtest -lgtest_main -lpthread \
-	-L include/bliss/ -lbliss
+test : CFLAGS  += -O0 -D DEBUG -g
+test : LDFLAGS += -lgtest -lgtest_main -lpthread -lbliss -lsaucy
 
 test: $(BIN)test
 run-test: test
 	$(call cmd-call, ./$(BIN)test)
 run-test-valgrind: test
-	$(call cmd-call, valgrind --leak-check=full ./$(BIN)test)
+	$(call cmd-valgrind-mem, ./$(BIN)test)
 run-test-gdb: test
-	$(call  cmd-call, gdb --args ./$(BIN)test)
-
+	$(call  cmd-gdb, ./$(BIN)test)
 
 # Generic rules
 

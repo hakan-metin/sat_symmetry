@@ -2,12 +2,19 @@ language: cpp
 dist: trusty
 sudo: false
 
+addons:
+  apt:
+    packages:
+      - valgrind
+
 matrix:
   include:
     - os: linux
       compiler: gcc
 
 script:
+  - source .env
   - make third_party
-  - make run-test
+  - make run-test-valgrind
   - make check-style
+  - make examples

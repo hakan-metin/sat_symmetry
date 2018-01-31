@@ -34,8 +34,6 @@ on_automorphim(void* arg, const unsigned int n, const unsigned int* aut) {
         permutation->closeCurrentCycle();
     }
     group->addPermutation(std::move(permutation));
-
-    std::cout << std::endl;
 }
 
 void BlissSymmetryFinder::findAutomorphism(Group *group) {
