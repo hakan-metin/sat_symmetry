@@ -34,7 +34,7 @@ on_automorphism(int n, const int *aut, int k, int *support, void *arg) {
         permutation->closeCurrentCycle();
     }
     group->addPermutation(std::move(permutation));
-    return 1; // Always continue to search
+    return 1;  // Always continue to search
 }
 
 void SaucySymmetryFinder::findAutomorphism(Group *group) {
@@ -61,8 +61,9 @@ void SaucySymmetryFinder::findAutomorphism(Group *group) {
 
 
     // Initialize saucy structure
-    struct saucy *s = (saucy*) saucy_alloc(n);
-    struct saucy_graph	*g = (saucy_graph*)malloc(sizeof(struct saucy_graph));
+    struct saucy *s = reinterpret_cast<struct saucy*>(saucy_alloc(n));
+    struct saucy_graph  *g = reinterpret_cast<struct saucy_graph*>
+        (malloc(sizeof(struct saucy_graph)));
 
     g->n = n;
     g->e = e;
@@ -73,8 +74,6 @@ void SaucySymmetryFinder::findAutomorphism(Group *group) {
     saucy_search(s, g, 0, colors.data(), on_automorphism,
                  static_cast<void*>(&info), &stats);
     saucy_free(s);
-
-
 }
 
 
