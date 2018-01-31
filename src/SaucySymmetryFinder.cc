@@ -73,8 +73,8 @@ void SaucySymmetryFinder::findAutomorphism(Group *group) {
     struct saucy_stats stats;
     saucy_search(s, g, 0, colors.data(), on_automorphism,
                  static_cast<void*>(&info), &stats);
+    free(g);
     saucy_free(s);
 }
-
 
 }  // namespace cosy
