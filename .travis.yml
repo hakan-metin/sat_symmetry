@@ -6,7 +6,7 @@ addons:
   apt:
     packages:
       - valgrind
-      - gcc-7
+      - gcc-6
 
 matrix:
   include:
