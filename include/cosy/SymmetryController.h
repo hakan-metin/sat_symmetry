@@ -42,6 +42,8 @@ class SymmetryController {
 
     bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
     std::vector<T> clauseToInject(ClauseInjector::Type type, T literal_s);
+
+    bool hasClauseToInject(ClauseInjector::Type type) const;
     std::vector<T> clauseToInject(ClauseInjector::Type type);
 
     void printInfo() const;
@@ -149,7 +151,6 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 template<class T> inline bool
 SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
                                          T literal_s) const {
-
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     return _injector.hasClause(type, literal_c.variable());
 }
@@ -162,6 +163,11 @@ SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
         std::move(_injector.getClause(type, literal_c.variable()));
     std::vector<T> literals_s = adaptVector(literals_c);
     return literals_s;
+}
+
+template<class T> inline bool
+SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type) const {
+    return _injector.hasClause(type, kNoBooleanVariable);
 }
 
 template<class T> inline std::vector<T>

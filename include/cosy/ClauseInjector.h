@@ -31,15 +31,15 @@ class Injector {
     }
 
     bool hasClause(BooleanVariable cause) const {
-        if (cause == kAnyBooleanVariable)
-            return _clauses.size() > 0;
+        if (_clauses.find(cause) == _clauses.end())
+            return false;
+
         return _clauses.at(cause).size() > 0;
     }
     std::vector<Literal> getClause(BooleanVariable cause) {
         std::vector<Literal> literals;
 
         CHECK_EQ(hasClause(cause), true);
-        CHECK_NE(cause, kAnyBooleanVariable);
 
         literals = std::move(_clauses[cause].back());
         _clauses[cause].pop_back();
@@ -59,6 +59,7 @@ class ClauseInjector {
         UNITS,
         ESBP,
         ESBP_FORCING,
+        NR_TYPES
     };
 
     ClauseInjector();
@@ -73,43 +74,20 @@ class ClauseInjector {
 
     void removeClause(BooleanVariable cause);
 
-
-    // bool addConflictClause(BooleanVariable cause,
-    //                        const std::vector<Literal>& literals);
-    // bool isConflictClause() const { return _conflicts.size() > 0; }
-    // bool isConflictClause(BooleanVariable cause) const;
-    // std::vector<Literal> conflictClause();
-    // void removeConflictClause(BooleanVariable cause);
-
-    // void addUnitClause(const Literal& literal);
-    // bool isUnitClause() const;
-    // Literal unitClause();
-
-    // bool addAssertiveClause(BooleanVariable cause,
-    //                         const std::vector<Literal>& literals);
     void printStats() const { _stats.print(); }
 
  private:
     std::vector<Injector> _injectors;
 
-
-    // struct ClauseInfos {
-    //     ClauseInfos(BooleanVariable c, const std::vector<Literal>& l) :
-    //         cause(c), literals(l) {}
-
-    //     BooleanVariable cause;
-    //     std::vector<Literal> literals;
-    // };
-
-    // std::deque<ClauseInfos> _conflicts;
-    // std::unordered_set<Literal> _units;
-
     struct Stats : StatsGroup {
         Stats() : StatsGroup("Clause Injector"),
-                  conflicts("Number of ESBP", this),
-                  units("Number of Units", this) {}
-        CounterStat conflicts;
+                  units("Number of Units", this),
+                  esbp("Number of ESBP", this),
+                  esbp_forcing("Number of ESBP Forcing", this) {}
+
         CounterStat units;
+        CounterStat esbp;
+        CounterStat esbp_forcing;
     };
     Stats _stats;
 
