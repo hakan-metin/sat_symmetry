@@ -40,11 +40,9 @@ class SymmetryController {
     void updateNotify(T literal_s, unsigned int level, bool isDecision);
     void updateCancel(T literal_s);
 
-    bool isClauseToInjectWith(T literal_s) const;
-    bool isUnitClauseToInject() const;
-
-    T unitClauseToInject();
-    std::vector<T> clauseToInject();
+    bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
+    std::vector<T> clauseToInject(ClauseInjector::Type type, T literal_s);
+    std::vector<T> clauseToInject(ClauseInjector::Type type);
 
     void printInfo() const;
     void printStats() const;
@@ -145,34 +143,35 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _injector.removeConflictClause(literal_c.variable());
+    _injector.removeClause(literal_c.variable());
 }
 
-template<class T>
-inline bool SymmetryController<T>::isClauseToInjectWith(T literal_s) const {
+template<class T> inline bool
+SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
+                                         T literal_s) const {
+
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
-    return _injector.isConflictClause(literal_c.variable());
+    return _injector.hasClause(type, literal_c.variable());
 }
 
-template<class T>
-inline bool SymmetryController<T>::isUnitClauseToInject() const {
-    return _injector.isUnitClause();
-}
-template<class T>
-inline T SymmetryController<T>::unitClauseToInject() {
-    Literal literal_c = _injector.unitClause();
-    T literal_s = _literal_adapter->convertFrom(literal_c);
 
-    return literal_s;
-}
-
-template<class T>
-inline std::vector<T> SymmetryController<T>::clauseToInject() {
+template<class T> inline std::vector<T>
+SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
+    cosy::Literal literal_c =  _literal_adapter->convertTo(literal_s);
     std::vector<cosy::Literal> literals_c =
-        std::move(_injector.conflictClause());
+        std::move(_injector.getClause(type, literal_c.variable()));
     std::vector<T> literals_s = adaptVector(literals_c);
     return literals_s;
 }
+
+template<class T> inline std::vector<T>
+SymmetryController<T>::clauseToInject(ClauseInjector::Type type) {
+    std::vector<cosy::Literal> literals_c =
+        std::move(_injector.getClause(type, kNoBooleanVariable));
+    std::vector<T> literals_s = adaptVector(literals_c);
+    return literals_s;
+}
+
 
 template<class T> inline std::vector<T>
 SymmetryController<T>::adaptVector(const std::vector<Literal>& literals) {

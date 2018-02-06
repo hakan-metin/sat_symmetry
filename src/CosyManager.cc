@@ -37,7 +37,7 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    if (injector->isConflictClause())
+    if (injector->hasClause(ClauseInjector::Type::ESBP, kAnyBooleanVariable))
         return;
 
     const BooleanVariable variable = literal.variable();

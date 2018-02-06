@@ -33,7 +33,10 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
     BooleanVariable variable = element.variable();
     Literal unit = Literal(variable, _order.valueMode() == TRUE_LESS_FALSE);
 
-    injector->addUnitClause(unit);
+    std::vector<Literal> literals = { unit };
+
+    injector->addClause(ClauseInjector::Type::UNITS, kNoBooleanVariable,
+                        std::move(literals));
 }
 
 void CosyStatus::updateNotify(const Literal& literal) {
@@ -135,7 +138,8 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     DCHECK_GE(literals.size(), 2);
     std::swap(literals[0], literals[1]);
 
-    injector->addConflictClause(reason, literals);
+    injector->addClause(ClauseInjector::Type::ESBP, reason,
+                        std::move(literals));
 }
 
 void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
@@ -175,7 +179,8 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
             literals.push_back(l);
     }
 
-    injector->addAssertiveClause(reason, literals);
+    injector->addClause(ClauseInjector::Type::ESBP_FORCING,
+                        reason, std::move(literals));
 }
 
 std::string CosyStatus::debugString() const {

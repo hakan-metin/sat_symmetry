@@ -8,6 +8,9 @@ namespace cosy {
 
 static int
 on_automorphism(int n, const int *aut, int k, int *support, void *arg) {
+    UNUSED_PARAMETER(k);
+    UNUSED_PARAMETER(support);
+
     SymmetryFinderInfo *info = static_cast<SymmetryFinderInfo*>(arg);
     Group *group = info->group;
     unsigned int num_vars = info->num_vars;

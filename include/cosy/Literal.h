@@ -13,6 +13,7 @@ namespace cosy {
 // Index of a variable (>= 0).
 DEFINE_INT_TYPE(BooleanVariable, int);
 const BooleanVariable kNoBooleanVariable(-1);
+const BooleanVariable kAnyBooleanVariable(-2);
 
 // Index of a literal (>= 0), see Literal below.
 DEFINE_INT_TYPE(LiteralIndex, int);
