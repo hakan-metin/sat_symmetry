@@ -26,6 +26,7 @@ class CosyManager {
     void updateCancel(const Literal& literal);
 
     void summarize() const;
+    void printStats() const { _stats.print(); }
 
  private:
     const Group& _group;
@@ -34,6 +35,17 @@ class CosyManager {
 
     std::vector< std::unique_ptr<CosyStatus> > _statuses;
 
+    struct Stats : public StatsGroup {
+        Stats() : StatsGroup("Cosy Manager"),
+                  total_time("Cosy total time", this),
+                  notify_time(" |- notify time", this),
+                  cancel_time(" |- cancel time", this)
+        {}
+        TimeDistribution total_time;
+        TimeDistribution notify_time;
+        TimeDistribution cancel_time;
+    };
+    Stats _stats;
 
     DISALLOW_COPY_AND_ASSIGN(CosyManager);
 };

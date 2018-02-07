@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 
+#define COSY_STATS
+
 #include "cosy/CosyManager.h"
 #include "cosy/ClauseInjector.h"
 #include "cosy/CNFModel.h"
@@ -19,6 +21,7 @@
 #include "cosy/Printer.h"
 #include "cosy/SaucyReader.h"
 #include "cosy/SymmetryFinder.h"
+
 
 namespace cosy {
 
@@ -57,11 +60,30 @@ class SymmetryController {
     Assignment _assignment;
     ClauseInjector _injector;
     std::unique_ptr<CosyManager> _cosy_manager;
+    std::unique_ptr<SymmetryFinder> _symmetry_finder;
 
+    bool loadCNFProblem(const std::string cnf_filename);
     std::vector<T> adaptVector(const std::vector<Literal>& literals);
 };
 
 // Implementation
+
+template<class T> inline
+bool SymmetryController<T>::loadCNFProblem(const std::string cnf_filename) {
+    CNFReader cnf_reader;
+    bool success;
+
+    success = cnf_reader.load(cnf_filename, &_cnf_model);
+    if (!success) {
+        LOG(ERROR) << "CNF file " << cnf_filename << " is not well formed.";
+        return false;
+    }
+    _num_vars = _cnf_model.numberOfVariables();
+    _assignment.resize(_num_vars);
+
+    return true;
+}
+
 
 template<class T>
 inline SymmetryController<T>::SymmetryController(
@@ -69,17 +91,13 @@ inline SymmetryController<T>::SymmetryController(
                            const std::string& sym_filename,
                            const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
-    _cosy_manager(nullptr) {
+    _cosy_manager(nullptr),
+    _symmetry_finder(nullptr) {
     bool success;
-    CNFReader cnf_reader;
     SaucyReader sym_reader;
 
-    success = cnf_reader.load(cnf_filename, &_cnf_model);
-    if (!success)
-        LOG(ERROR) << "CNF file " << cnf_filename << " is not well formed.";
-
-    _num_vars = _cnf_model.numberOfVariables();
-    _assignment.resize(_num_vars);
+    if (!loadCNFProblem(cnf_filename))
+        return;
 
     success = sym_reader.load(sym_filename, _num_vars, &_group);
     if (!success)
@@ -92,22 +110,16 @@ inline SymmetryController<T>::SymmetryController(
                             SymmetryFinder::Automorphism tool,
                             const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
-    _cosy_manager(nullptr) {
-    bool success;
-    CNFReader cnf_reader;
+    _cosy_manager(nullptr),
+    _symmetry_finder(nullptr) {
+    if (!loadCNFProblem(cnf_filename))
+        return;
 
-    success = cnf_reader.load(cnf_filename, &_cnf_model);
-    if (!success)
-        LOG(ERROR) << "CNF file " << cnf_filename << " is not well formed.";
-
-    _num_vars = _cnf_model.numberOfVariables();
-    _assignment.resize(_num_vars);
-
-    std::unique_ptr<SymmetryFinder> symmetry_finder
+    _symmetry_finder = std::unique_ptr<SymmetryFinder>
         (SymmetryFinder::create(_cnf_model, tool));
 
-    CHECK_NOTNULL(symmetry_finder);
-    symmetry_finder->findAutomorphism(&_group);
+    CHECK_NOTNULL(_symmetry_finder);
+    _symmetry_finder->findAutomorphism(&_group);
 }
 
 template<class T>
@@ -192,12 +204,17 @@ template<class T> inline void
 SymmetryController<T>::printStats() const {
     Printer::printSection(" Symmetry Stats ");
     _injector.printStats();
+    if (_cosy_manager) {
+        IF_STATS_ENABLED(_cosy_manager->printStats());
+    }
 }
 
 template<class T> inline void
 SymmetryController<T>::printInfo() const {
     _cnf_model.summarize();
     Printer::printSection(" Symmetry Information ");
+    if (_symmetry_finder)
+        _symmetry_finder->printStats();
     _group.summarize(_num_vars);
     if (_cosy_manager)
         _cosy_manager->summarize();

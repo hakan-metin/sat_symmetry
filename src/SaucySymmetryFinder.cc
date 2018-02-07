@@ -41,6 +41,8 @@ on_automorphism(int n, const int *aut, int k, int *support, void *arg) {
 }
 
 void SaucySymmetryFinder::findAutomorphism(Group *group) {
+    SCOPED_TIME_STAT(&_stats.find_time);
+
     SymmetryFinderInfo info(group, _num_vars);
     std::vector<int> adj;
     std::vector<int> edj;

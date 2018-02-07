@@ -5,7 +5,7 @@
 namespace cosy {
 
 static const bool FLAGS_esbp = true;
-static const bool FLAGS_esbp_forcing = true;
+static const bool FLAGS_esbp_forcing = false;
 
 CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
     _group(group),
@@ -40,6 +40,11 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
+    IF_STATS_ENABLED({
+            ScopedTimeDistributionUpdater time(&_stats.total_time);
+            time.alsoUpdate(&_stats.notify_time);
+        });
+
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
@@ -56,6 +61,11 @@ void CosyManager::updateNotify(const Literal& literal,
 }
 
 void CosyManager::updateCancel(const Literal& literal) {
+    IF_STATS_ENABLED({
+            ScopedTimeDistributionUpdater time(&_stats.total_time);
+            time.alsoUpdate(&_stats.cancel_time);
+        });
+
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];

@@ -3,6 +3,8 @@
 #ifndef INCLUDE_COSY_SAUCYSYMMETRYFINDER_H_
 #define INCLUDE_COSY_SAUCYSYMMETRYFINDER_H_
 
+#include <string>
+
 #include "cosy/Macros.h"
 #include "cosy/SymmetryFinder.h"
 #include "cosy/CNFGraph.h"
@@ -17,6 +19,7 @@ class SaucySymmetryFinder : public SymmetryFinder {
     ~SaucySymmetryFinder() {}
 
     void findAutomorphism(Group *group) override;
+    std::string toolName() const override { return std::string("Saucy3"); }
 };
 
 }  // namespace cosy
