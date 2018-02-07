@@ -4,6 +4,9 @@
 
 namespace cosy {
 
+static const bool FLAGS_esbp = true;
+static const bool FLAGS_esbp_forcing = true;
+
 CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
     _group(group),
     _assignment(assignment),
@@ -37,18 +40,17 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    // if (injector->hasClause(ClauseInjector::Type::ESBP, kAnyBooleanVariable))
-    //     return;
-
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
 
         status->updateNotify(literal);
 
-        if (status->state() == REDUCER) {
+        if (FLAGS_esbp && status->state() == REDUCER) {
             status->generateESBP(literal.variable(), injector);
             break;
+        } else if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
+            status->generateForceLexLeaderESBP(literal.variable(), injector);
         }
     }
 }
