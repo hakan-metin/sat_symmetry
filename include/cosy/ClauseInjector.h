@@ -6,7 +6,8 @@
 #include <deque>
 #include <unordered_set>
 #include <vector>
-#include <limits>
+#include <unordered_map>
+#include <utility>
 
 #include "cosy/Clause.h"
 #include "cosy/Macros.h"
