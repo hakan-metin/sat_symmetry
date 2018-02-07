@@ -23,7 +23,8 @@ class Injector {
     ~Injector() {}
 
     void addClause(BooleanVariable cause, std::vector<Literal>&& literals) {
-        _clauses[cause].push_back(std::move(literals));
+        if (cause == kNoBooleanVariable || _clauses[cause].empty())
+            _clauses[cause].push_back(std::move(literals));
     }
 
     void removeClause(BooleanVariable cause) {
