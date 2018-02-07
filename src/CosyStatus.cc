@@ -62,14 +62,11 @@ void CosyStatus::updateCancel(const Literal& literal) {
         return;
 
     const LookupInfo& lookup = _lookup_infos.back();
-
     if (lookup.variable != literal.variable())
         return;
 
     _lookup_index = lookup.back_index;
     _lookup_infos.pop_back();
-
-    _state = ACTIVE;
 }
 
 void CosyStatus::updateState() {
@@ -157,6 +154,10 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
     affected = _assignment.literalIsAssigned(inverse) ? inverse : element;
 
     l = Literal(undef.variable(), _assignment.literalIsTrue(affected));
+    if (used.insert(l).second)
+        literals.push_back(l);
+
+    l = _assignment.getFalseLiteralForAssignedVariable(reason);
     if (used.insert(l).second)
         literals.push_back(l);
 
