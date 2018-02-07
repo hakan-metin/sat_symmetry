@@ -3,6 +3,7 @@
 #ifndef INCLUDE_COSY_SAUCYSYMMETRYFINDER_H_
 #define INCLUDE_COSY_SAUCYSYMMETRYFINDER_H_
 
+#include "cosy/Macros.h"
 #include "cosy/SymmetryFinder.h"
 #include "cosy/CNFGraph.h"
 #include "cosy/Group.h"

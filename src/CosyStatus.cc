@@ -33,7 +33,10 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
     BooleanVariable variable = element.variable();
     Literal unit = Literal(variable, _order.valueMode() == TRUE_LESS_FALSE);
 
-    injector->addUnitClause(unit);
+    std::vector<Literal> literals = { unit };
+
+    injector->addClause(ClauseInjector::Type::UNITS, kNoBooleanVariable,
+                        std::move(literals));
 }
 
 void CosyStatus::updateNotify(const Literal& literal) {
@@ -59,14 +62,11 @@ void CosyStatus::updateCancel(const Literal& literal) {
         return;
 
     const LookupInfo& lookup = _lookup_infos.back();
-
     if (lookup.variable != literal.variable())
         return;
 
     _lookup_index = lookup.back_index;
     _lookup_infos.pop_back();
-
-    _state = ACTIVE;
 }
 
 void CosyStatus::updateState() {
@@ -135,7 +135,8 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     DCHECK_GE(literals.size(), 2);
     std::swap(literals[0], literals[1]);
 
-    injector->addConflictClause(reason, literals);
+    injector->addClause(ClauseInjector::Type::ESBP, reason,
+                        std::move(literals));
 }
 
 void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
@@ -153,6 +154,10 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
     affected = _assignment.literalIsAssigned(inverse) ? inverse : element;
 
     l = Literal(undef.variable(), _assignment.literalIsTrue(affected));
+    if (used.insert(l).second)
+        literals.push_back(l);
+
+    l = _assignment.getFalseLiteralForAssignedVariable(reason);
     if (used.insert(l).second)
         literals.push_back(l);
 
@@ -175,7 +180,8 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
             literals.push_back(l);
     }
 
-    injector->addAssertiveClause(reason, literals);
+    injector->addClause(ClauseInjector::Type::ESBP_FORCING,
+                        reason, std::move(literals));
 }
 
 std::string CosyStatus::debugString() const {
