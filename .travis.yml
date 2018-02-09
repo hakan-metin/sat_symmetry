@@ -18,3 +18,4 @@ script:
   - make run-test-valgrind
   - make check-style
   - make examples
+  - make solvers
