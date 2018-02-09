@@ -2,6 +2,9 @@ language: cpp
 dist: trusty
 sudo: false
 
+before_install:
+  - pip install --user cpp-coveralls
+
 addons:
   apt:
     packages:
@@ -19,3 +22,6 @@ script:
   - make check-style
   - make examples
   - make solvers
+
+after_success:
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
