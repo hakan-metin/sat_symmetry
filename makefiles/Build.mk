@@ -29,8 +29,8 @@ default: $(LIB)$(lib)
 ################################################################################
 # TESTS
 
-test : CFLAGS  += -O0 -D DEBUG -g
-test : LDFLAGS += -lgtest -lgtest_main -lpthread -lbliss -lsaucy
+test : CFLAGS  += -O0 -D DEBUG -g -fprofile-arcs -ftest-coverage
+test : LDFLAGS += -lgtest -lgtest_main -lpthread -lbliss -lsaucy -lgcov
 
 test: $(BIN)test
 run-test: test
