@@ -77,6 +77,9 @@ $(OBJ)%.a:
 $(OBJ)%.o: %.cc
 	$(call cmd-cxx, $@, $<, $(CFLAGS))
 
+$(OBJ)tests/%.o: %.cc
+	$(call cmd-cxx, $@, $<, $(CFLAGS))
+
 $(OBJ)%.test.o: %.test.cc
 	$(call cmd-cxx, $@, $<, $(CFLAGS))
 

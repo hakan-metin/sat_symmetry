@@ -7,7 +7,7 @@ objects := $(patsubst %.cc, $(OBJ)%.o, $(sources))
 
 tests := $(wildcard tests/units/*.test.cc)
 tests_objects := $(patsubst %.cc, $(OBJ)%.o, $(tests))
-tests_objects += $(objects)
+tests_objects +=  $(patsubst %.cc, $(OBJ)tests/%.o, $(sources))
 
 lib := libcosy.a
 
