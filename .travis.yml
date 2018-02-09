@@ -16,7 +16,7 @@ matrix:
       compiler: gcc
 
 before_script:
-  - [[ $TRAVIS_BRANCH == 'master' ]] && ./scripts/retrieve_problems
+  - if [[ $TRAVIS_BRANCH == "master" ]]; then ./scripts/retrieve_problems; fi
 
 script:
   - source .env
@@ -25,7 +25,7 @@ script:
   - make check-style
   - make examples
   - make solvers
-  - [[ $TRAVIS_BRANCH == 'master' ]] && ./scripts/execute_bench fully_sym 30 ./bin/minisat
+  - if [[ $TRAVIS_BRANCH == 'master' ]]; then ./scripts/execute_bench fully_sym 30 ./bin/minisat; fi
 
 after_success:
   - coveralls --exclude lib --exclude tests --exclude third_party --exclude examples  --gcov-options '\-lp'
