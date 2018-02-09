@@ -25,7 +25,7 @@ script:
   - make check-style
   - make examples
   - make solvers
-  - if [[ $TRAVIS_BRANCH == 'master' ]]; then ./scripts/execute_bench fully_sym 30 ./bin/minisat; fi
+  - if [[ $TRAVIS_BRANCH == 'master' ]]; then ./scripts/execute_bench fully_sym 10 ./bin/minisat; fi
 
 after_success:
   - coveralls --exclude lib --exclude tests --exclude third_party --exclude examples  --gcov-options '\-lp'
