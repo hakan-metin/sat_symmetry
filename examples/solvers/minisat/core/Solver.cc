@@ -775,7 +775,7 @@ lbool Solver::solve_()
 	while (symmetry->hasClauseToInject(type)) {
 
             std::vector<Lit> literals = symmetry->clauseToInject(type);
-            assert(literals.size() == 0);
+            assert(literals.size() == 1);
             Lit l = literals[0];
 	    uncheckedEnqueue(l);
 	}
