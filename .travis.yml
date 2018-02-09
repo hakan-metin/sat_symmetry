@@ -8,12 +8,19 @@ before_install:
 addons:
   apt:
     packages:
-      - valgrind
+    - valgrind
 
 matrix:
   include:
     - os: linux
       compiler: gcc
+
+before_script:
+  - if [[ $TRAVIS_BRANCH == 'master' ]]
+    then
+        wget https://lip6.fr/Hakan.Metin/fully_sym.zip
+        unzip fully_sym.zip
+    fi
 
 script:
   - source .env
@@ -22,6 +29,7 @@ script:
   - make check-style
   - make examples
   - make solvers
+  - if [[ $TRAVIS_BRANCH == 'master' ]] && ./scripts/execute_bench fully_sym 30 ./bin/minisat
 
 after_success:
   - coveralls --exclude lib --exclude tests --exclude third_party --exclude examples  --gcov-options '\-lp'

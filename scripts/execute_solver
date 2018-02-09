@@ -1,0 +1,43 @@
+#!/bin/bash
+set -u
+
+function check_exist_or_die {
+    [ -e "$1" ] || { echo "file not exist: $1"; exit 1; }
+}
+
+if [[ $# -lt 3 ]]
+then
+    echo "Usage: $0 SOLVER CNF TIMEOUT SOLVER_OPTIONS" >&2
+    exit 1
+fi
+
+SOLVER="$1";  shift
+CNF="$1";     shift
+TIMEOUT="$1"; shift
+OPTIONS="$@"
+
+RUNNER="third_party/runsolver"
+
+# Some check
+check_exist_or_die "$RUNNER"
+check_exist_or_die "$SOLVER"
+check_exist_or_die "$CNF"
+
+CNF_FILE=$(basename "$CNF")
+SOLVER_FILE=$(basename "$SOLVER")
+
+RESULTS="results"
+mkdir -p $RESULTS
+
+BASE="$RESULTS/$SOLVER_FILE-$CNF_FILE"
+VAR_FILE="$BASE.var"
+OUT_FILE="$BASE.out"
+
+CMD="\"$SOLVER\" \"$CNF\" $OPTIONS"
+
+export LC_NUMERIC=C
+
+printf '%-s \t %-s \t' "$SOLVER_FILE" "$CNF_FILE"
+$RUNNER -w /dev/null -v "$VAR_FILE" -W $TIMEOUT -o "$OUT_FILE" sh -c "$CMD"
+source $VAR_FILE
+printf "%.2f\n" $WCTIME
