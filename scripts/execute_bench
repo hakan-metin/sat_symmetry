@@ -17,10 +17,12 @@ TIMEOUT="$1";      shift
 SOLVER="$1";       shift
 OPTIONS="$@"
 
+PARALLEL_TASK=2
+
 check_exist_or_die "$PROBLEMS_DIR"
 check_exist_or_die "$SOLVER"
 
-for CNF in "$PROBLEMS_DIR"/*.cnf
-do
-    ./scripts/execute_solver "$SOLVER" "$CNF" $TIMEOUT "$OPTIONS"
-done
+
+find "$PROBLEMS_DIR" -iname "*.cnf" -type f -print0 | \
+    xargs -0 -L1 -I {} --max-procs=${PARALLEL_TASK} sh -c \
+          "./scripts/execute_solver \"$SOLVER\" \"{}\" $TIMEOUT \"$OPTIONS\""
