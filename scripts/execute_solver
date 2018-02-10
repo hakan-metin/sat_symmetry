@@ -37,7 +37,28 @@ CMD="\"$SOLVER\" \"$CNF\" $OPTIONS"
 
 export LC_NUMERIC=C
 
-printf '%-s \t %-s \t' "$SOLVER_FILE" "$CNF_FILE"
+ID="$SOLVER_FILE $CNF_FILE"
+
+printf '\e[0;32m%-6s\e[m %s\n' '[ RUN      ]' "$ID"
 $RUNNER -w /dev/null -v "$VAR_FILE" -W $TIMEOUT -o "$OUT_FILE" sh -c "$CMD"
+
 source $VAR_FILE
-printf "%.2f\n" $WCTIME
+if [[ $TIMEOUT == "true" ]]
+then
+    printf '\e[0;33m%-6s\e[m %s (%.2f s)\n' '[  TIMEOUT ]' "$ID" $WCTIME
+else
+    ANSWER=$(grep -o -R "^s [A-Z]*$" "$OUT_FILE" | cut -d' ' -f2)
+    if [[ $ANSWER == "UNSATISFIABLE" ]]; then
+        printf '\e[0;32m%-6s\e[m %s (%.2f s)\n' '[    UNSAT ]' "$ID" $WCTIME
+    elif [[ $ANSWER == "SATISFIABLE" ]]; then
+        # Check Solution
+        CHECK=$(third_party/SAT "$CNF" "$OUT_FILE" | tail -n1)
+        if [[ $CHECK -eq 11 ]]; then
+            printf '\e[0;32m%-6s\e[m %s (%.2f s)\n' '[      SAT ]' "$ID" $WCTIME
+        else
+            printf '\e[0;31m%-6s\e[m %s (%.2f s)\n' '[       KO ]' "$ID" $WCTIME
+        fi
+    else
+        printf '\e[0;36m%-6s\e[m %s (%.2f s)\n' '[  UNKNOWN ]' "$ID" $WCTIME
+    fi
+fi
