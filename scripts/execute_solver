@@ -45,6 +45,7 @@ $RUNNER -w /dev/null -v "$VAR_FILE" -W $TIMEOUT -o "$OUT_FILE" sh -c "$CMD"
 source $VAR_FILE
 if [[ $TIMEOUT == "true" ]]
 then
+    ANSWER="TIMEOUT"
     printf '\e[0;33m%-6s\e[m %s (%.2f s)\n' '[  TIMEOUT ]' "$ID" $WCTIME
 else
     ANSWER=$(grep -o -R "^s [A-Z]*$" "$OUT_FILE" | cut -d' ' -f2)
@@ -59,6 +60,8 @@ else
             printf '\e[0;31m%-6s\e[m %s (%.2f s)\n' '[       KO ]' "$ID" $WCTIME
         fi
     else
+        ANSWER="UNKNONW"
         printf '\e[0;36m%-6s\e[m %s (%.2f s)\n' '[  UNKNOWN ]' "$ID" $WCTIME
     fi
 fi
+echo "#Result by solver\nRESULT=$ANSWER" >> $VAR_FILE
