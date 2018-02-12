@@ -20,6 +20,7 @@
 #include "cosy/OrderFactory.h"
 #include "cosy/Printer.h"
 #include "cosy/SaucyReader.h"
+#include "cosy/SPFSManager.h"
 #include "cosy/SymmetryFinder.h"
 
 
@@ -39,6 +40,7 @@ class SymmetryController {
     virtual ~SymmetryController() {}
 
     void enableCosy(OrderMode vars, ValueMode value);
+    void enableSPFS();
 
     void updateNotify(T literal_s, unsigned int level, bool isDecision);
     void updateCancel(T literal_s);
@@ -60,6 +62,7 @@ class SymmetryController {
     Assignment _assignment;
     ClauseInjector _injector;
     std::unique_ptr<CosyManager> _cosy_manager;
+    std::unique_ptr<SPFSManager> _spfs_manager;
     std::unique_ptr<SymmetryFinder> _symmetry_finder;
 
     bool loadCNFProblem(const std::string cnf_filename);
@@ -92,6 +95,7 @@ inline SymmetryController<T>::SymmetryController(
                            const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
     _cosy_manager(nullptr),
+    _spfs_manager(nullptr),
     _symmetry_finder(nullptr) {
     bool success;
     SaucyReader sym_reader;
@@ -111,6 +115,7 @@ inline SymmetryController<T>::SymmetryController(
                             const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
     _cosy_manager(nullptr),
+    _spfs_manager(nullptr),
     _symmetry_finder(nullptr) {
     if (!loadCNFProblem(cnf_filename))
         return;
@@ -121,6 +126,7 @@ inline SymmetryController<T>::SymmetryController(
     CHECK_NOTNULL(_symmetry_finder);
     _symmetry_finder->findAutomorphism(&_group);
 }
+
 
 template<class T>
 inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
@@ -139,6 +145,15 @@ inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
 }
 
 template<class T>
+inline void SymmetryController<T>::enableSPFS() {
+    if (_group.numberOfPermutations() == 0)
+        return;
+
+    _spfs_manager = std::unique_ptr<SPFSManager>
+        (new SPFSManager(_group, _assignment));
+}
+
+template<class T>
 inline void SymmetryController<T>::updateNotify(T literal_s,
                                                 unsigned int level,
                                                 bool isDecision) {
@@ -146,11 +161,18 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
     _assignment.assignFromTrueLiteral(literal_c);
     if (_cosy_manager)
         _cosy_manager->updateNotify(literal_c, &_injector);
+    if (_spfs_manager)
+        _spfs_manager->updateNotify(literal_c, &_injector);
 }
 
 template<class T>
 inline void SymmetryController<T>::updateCancel(T literal_s) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
+
+    /* SPFS Must be updated before unassignLiteral */
+
+    if (_spfs_manager)
+        _spfs_manager->updateCancel(literal_c);
 
     _assignment.unassignLiteral(literal_c);
 
