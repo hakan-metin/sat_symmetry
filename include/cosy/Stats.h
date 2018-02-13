@@ -17,6 +17,10 @@
 #include "cosy/Printer.h"
 #include "cosy/Timer.h"
 
+// Active stats
+#define COSY_STATS
+
+
 namespace cosy {
 
 // Forward Declaration
@@ -112,8 +116,8 @@ class EnableScopedTimeDistributionUpdater {
         _stat->startTimer();
     }
     virtual ~EnableScopedTimeDistributionUpdater() {
-        const double elapsed = _stat->stopTimerAndAddElapsedTime();
-        if (_also != nullptr)
+        double elapsed = _stat->stopTimerAndAddElapsedTime();
+        if (_also)
             _also->addTimeInSeconds(elapsed);
     }
 
@@ -129,7 +133,7 @@ class DisableScopedTimeDistributionUpdater {
     explicit DisableScopedTimeDistributionUpdater(TimeDistribution *stat) {
         UNUSED_PARAMETER(stat);
     }
-    ~DisableScopedTimeDistributionUpdater() {}
+    virtual ~DisableScopedTimeDistributionUpdater() {}
     void alsoUpdate(TimeDistribution *also) { UNUSED_PARAMETER(also); }
  private:
     DISALLOW_COPY_AND_ASSIGN(DisableScopedTimeDistributionUpdater);
@@ -150,7 +154,6 @@ class CounterStat : public Stat {
 };
 
 
-#define COSY_STATS
 
 #ifdef COSY_STATS
 using  ScopedTimeDistributionUpdater = EnableScopedTimeDistributionUpdater;
@@ -161,6 +164,9 @@ using  ScopedTimeDistributionUpdater = DisableScopedTimeDistributionUpdater;
 #endif
 
 #define SCOPED_TIME_STAT(stat) \
+    ScopedTimeDistributionUpdater scoped_time_stat(stat)
+
+#define ALWAYS_SCOPED_TIME_STAT(stat) \
     EnableScopedTimeDistributionUpdater scoped_time_stat(stat)
 
 }  // namespace cosy
