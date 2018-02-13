@@ -232,8 +232,6 @@ SymmetryController<T>::printStats() const {
     if (_spfs_manager) {
         IF_STATS_ENABLED(_spfs_manager->printStats());
     }
-
-
 }
 
 template<class T> inline void

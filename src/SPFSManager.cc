@@ -17,16 +17,8 @@ SPFSManager::SPFSManager(const Group& group, const Assignment& assignment) :
 SPFSManager::~SPFSManager() {
 }
 
-long fibonacci(unsigned n)
-{
-    if (n < 2) return n;
-    return fibonacci(n-1) + fibonacci(n-2);
-}
-
-
 void SPFSManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-
     ScopedTimeDistributionUpdater time(&(_stats.total_time));
     time.alsoUpdate(&(_stats.notify_time));
 

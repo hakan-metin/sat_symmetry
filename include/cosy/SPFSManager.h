@@ -27,6 +27,7 @@ class SPFSManager {
     void updateCancel(const Literal& literal);
 
     void printStats() const { Printer::print(""); _stats.print(); }
+
  private:
     const Group& _group;
     const Assignment& _assignment;
