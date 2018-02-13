@@ -26,6 +26,8 @@ void SPFSManager::updateNotify(const Literal& literal,
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<SPFSStatus>& status = _statuses[index];
         status->updateNotify(literal);
+
+        //        status->getFirstAsymetricLiteral();
     }
 }
 

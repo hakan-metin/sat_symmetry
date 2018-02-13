@@ -166,10 +166,9 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
 
 template<class T>
 inline void SymmetryController<T>::updateCancel(T literal_s) {
-    cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
+    const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
 
     /* SPFS Must be updated before unassignLiteral */
-
     if (_spfs_manager)
         _spfs_manager->updateCancel(literal_c);
 
@@ -184,7 +183,7 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 template<class T> inline bool
 SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
                                          T literal_s) const {
-    cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
+    const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     return _injector.hasClause(type, literal_c.variable());
 }
 

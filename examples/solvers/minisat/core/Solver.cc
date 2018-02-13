@@ -768,8 +768,8 @@ lbool Solver::solve_()
     // Set symmetry order
     if (symmetry != nullptr) {
         symmetry->enableSPFS();
-        symmetry->enableCosy(cosy::OrderMode::AUTO,
-                             cosy::ValueMode::TRUE_LESS_FALSE);
+        // symmetry->enableCosy(cosy::OrderMode::AUTO,
+        //                      cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;

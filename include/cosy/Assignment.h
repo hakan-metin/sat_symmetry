@@ -4,6 +4,7 @@
 #ifndef INCLUDE_COSY_ASSIGNMENT_H_
 #define INCLUDE_COSY_ASSIGNMENT_H_
 
+#include <unordered_map>
 #include <vector>
 
 #include "cosy/Literal.h"

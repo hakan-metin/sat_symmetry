@@ -65,7 +65,6 @@ void CosyManager::updateCancel(const Literal& literal) {
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
-
         status->updateCancel(literal);
     }
 }

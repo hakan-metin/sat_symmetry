@@ -25,6 +25,8 @@ class SPFSStatus {
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
+    LiteralIndex getFirstAsymetricLiteral();
+
  private:
     const Permutation& _permutation;
     const Assignment& _assignment;

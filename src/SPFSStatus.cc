@@ -54,18 +54,16 @@ void SPFSStatus::updateCancel(const Literal& literal) {
     DCHECK(_assignment.literalIsAssigned(literal));
     DCHECK(_notified.size() > 0 && _notified.back() == literal);
 
-    const Literal image = _permutation.imageOf(literal);
-    const Literal inverse = _permutation.inverseOf(literal);
-
     _notified.pop_back();
     _lookup_index = 0;
-
 
     const bool isInactive = _reasonOfInactive != kNoLiteralIndex;
     if (isInactive && _reasonOfInactive != literal.index())
         return;
 
     _reasonOfInactive = kNoLiteralIndex;
+    const Literal image = _permutation.imageOf(literal);
+    const Literal inverse = _permutation.inverseOf(literal);
 
     const bool literalIsDecision = _assignment.isDecision(literal);
     if (literalIsDecision && !_assignment.literalIsAssigned(image))
@@ -75,5 +73,24 @@ void SPFSStatus::updateCancel(const Literal& literal) {
         ++_amountForActive;
 }
 
+LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
+    if (!( _amountForActive == 0 &&  _reasonOfInactive == kNoLiteralIndex))
+        return kNoLiteralIndex;
+
+    Literal literal;
+    for (; _lookup_index < _notified.size(); ++_lookup_index) {
+        literal = _notified[_lookup_index];
+        const Literal image = _permutation.imageOf(literal);
+        const bool isDecisionLiteral = _assignment.isDecision(literal);
+        if (!( isDecisionLiteral || _assignment.literalIsTrue(image)))
+            break;
+    }
+
+    if (_lookup_index == _notified.size())
+        return kNoLiteralIndex;
+
+    DCHECK(! _assignment.literalIsTrue(imageOf(_permutation.imageOf(literal))));
+    return literal.index();
+}
 
 }  // namespace cosy
