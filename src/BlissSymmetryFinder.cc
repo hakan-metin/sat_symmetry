@@ -37,7 +37,7 @@ on_automorphim(void* arg, const unsigned int n, const unsigned int* aut) {
 }
 
 void BlissSymmetryFinder::findAutomorphism(Group *group) {
-    SCOPED_TIME_STAT(&_stats.find_time);
+    ALWAYS_SCOPED_TIME_STAT(&_stats.find_time);
 
     unsigned int n = _graph.numberOfNodes();
 
