@@ -89,7 +89,7 @@ LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
     if (_lookup_index == _notified.size())
         return kNoLiteralIndex;
 
-    DCHECK(! _assignment.literalIsTrue(_permutation.imageOf(literal)));
+    DCHECK(!_assignment.literalIsTrue(_permutation.imageOf(literal)));
     return literal.index();
 }
 
