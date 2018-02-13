@@ -7,9 +7,9 @@ namespace cosy {
 static const bool FLAGS_esbp = true;
 static const bool FLAGS_esbp_forcing = false;
 
-CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
+CosyManager::CosyManager(const Group& group, const Trail& trail) :
     _group(group),
-    _assignment(assignment),
+    _assignment(trail.assignment()),
     _order(nullptr) {
 }
 

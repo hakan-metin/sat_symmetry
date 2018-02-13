@@ -15,12 +15,13 @@
 #include "cosy/Permutation.h"
 #include "cosy/Stats.h"
 #include "cosy/SPFSStatus.h"
+#include "cosy/Trail.h"
 
 namespace cosy {
 
 class SPFSManager {
  public:
-    SPFSManager(const Group& group, const Assignment& assignment);
+    SPFSManager(const Group& group, const Trail& trail);
     ~SPFSManager();
 
     void updateNotify(const Literal& literal, ClauseInjector *injector);
@@ -31,6 +32,7 @@ class SPFSManager {
  private:
     const Group& _group;
     const Assignment& _assignment;
+    const Trail& _trail;
 
     std::vector< std::unique_ptr<SPFSStatus> > _statuses;
 

@@ -4,12 +4,13 @@
 
 namespace cosy {
 
-SPFSManager::SPFSManager(const Group& group, const Assignment& assignment) :
+SPFSManager::SPFSManager(const Group& group, const Trail& trail) :
     _group(group),
-    _assignment(assignment) {
+    _assignment(trail.assignment()),
+    _trail(trail) {
     for (const std::unique_ptr<Permutation>& perm : _group.permutations()) {
         std::unique_ptr<SPFSStatus> status
-            (new SPFSStatus(*perm, _assignment));
+            (new SPFSStatus(*perm, _trail));
         _statuses.emplace_back(status.release());
     }
 }

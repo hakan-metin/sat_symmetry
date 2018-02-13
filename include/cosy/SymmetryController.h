@@ -21,6 +21,7 @@
 #include "cosy/SPFSManager.h"
 #include "cosy/SymmetryFinder.h"
 #include "cosy/Stats.h"
+#include "cosy/Trail.h"
 
 namespace cosy {
 
@@ -57,7 +58,7 @@ class SymmetryController {
     const std::unique_ptr<LiteralAdapter<T>>& _literal_adapter;
     Group _group;
     CNFModel _cnf_model;
-    Assignment _assignment;
+    Trail _trail;
     ClauseInjector _injector;
     std::unique_ptr<CosyManager> _cosy_manager;
     std::unique_ptr<SPFSManager> _spfs_manager;
@@ -80,7 +81,7 @@ bool SymmetryController<T>::loadCNFProblem(const std::string cnf_filename) {
         return false;
     }
     _num_vars = _cnf_model.numberOfVariables();
-    _assignment.resize(_num_vars);
+    _trail.resize(_num_vars);
 
     return true;
 }
@@ -136,7 +137,7 @@ inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
     CHECK_NOTNULL(order);
 
     _cosy_manager = std::unique_ptr<CosyManager>
-        (new CosyManager(_group, _assignment));
+        (new CosyManager(_group, _trail));
 
     _cosy_manager->defineOrder(std::move(order));
     _cosy_manager->generateUnits(&_injector);
@@ -148,7 +149,7 @@ inline void SymmetryController<T>::enableSPFS() {
         return;
 
     _spfs_manager = std::unique_ptr<SPFSManager>
-        (new SPFSManager(_group, _assignment));
+        (new SPFSManager(_group, _trail));
 }
 
 template<class T>
@@ -156,7 +157,8 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
                                                 unsigned int level,
                                                 bool isDecision) {
     const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
-    _assignment.assignFromTrueLiteral(literal_c, isDecision);
+    _trail.enqueue(literal_c, level, kNoReason, isDecision);
+
     if (_spfs_manager)
         _spfs_manager->updateNotify(literal_c, &_injector);
 
@@ -172,7 +174,8 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
     if (_spfs_manager)
         _spfs_manager->updateCancel(literal_c);
 
-    _assignment.unassignLiteral(literal_c);
+    Literal literal = _trail.dequeue();
+    CHECK_EQ(literal, literal_c);
 
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);

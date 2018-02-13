@@ -4,9 +4,6 @@
 #ifndef INCLUDE_COSY_ASSIGNMENT_H_
 #define INCLUDE_COSY_ASSIGNMENT_H_
 
-#include <unordered_map>
-#include <vector>
-
 #include "cosy/Literal.h"
 #include "cosy/Bitset.h"
 #include "cosy/Logging.h"
@@ -22,7 +19,7 @@ class Assignment {
     ~Assignment() {}
 
     void resize(unsigned int num_variables);
-    void assignFromTrueLiteral(Literal literal, bool isDecision);
+    void assignFromTrueLiteral(Literal literal);
     void unassignLiteral(Literal literal);
 
     bool literalIsTrue(Literal literal) const;
@@ -36,33 +33,27 @@ class Assignment {
     Literal getTrueLiteralForAssignedVariable(BooleanVariable var) const;
     Literal getFalseLiteralForAssignedVariable(BooleanVariable var) const;
 
-    bool isDecision(Literal literal) const;
-
     unsigned int numberOfVariables() const;
 
  private:
     Bitset64<LiteralIndex> _assignment;
-    std::vector<bool> _decisions;
 
     DISALLOW_COPY_AND_ASSIGN(Assignment);
 };
 
 inline void Assignment::resize(unsigned int num_variables) {
     _assignment.Resize(LiteralIndex(num_variables << 1));
-    _decisions.resize(num_variables, false);
 }
 
 inline
-void Assignment::assignFromTrueLiteral(Literal literal, bool isDecision) {
+void Assignment::assignFromTrueLiteral(Literal literal) {
     DCHECK(!variableIsAssigned(literal.variable()));
     _assignment.Set(literal.index());
-    _decisions[literal.variable().value()] = isDecision;
 }
 
 inline void Assignment::unassignLiteral(Literal literal) {
     DCHECK(variableIsAssigned(literal.variable()));
     _assignment.ClearTwoBits(literal.index());
-    _decisions[literal.variable().value()] = false;
 }
 
 inline bool Assignment::literalIsTrue(Literal literal) const {
@@ -101,10 +92,6 @@ inline Literal
 Assignment::getFalseLiteralForAssignedVariable(BooleanVariable var) const {
     DCHECK(variableIsAssigned(var));
     return Literal(var, !_assignment.IsSet(LiteralIndex(var.value() << 1)));
-}
-
-inline bool Assignment::isDecision(Literal literal) const {
-    return _decisions[literal.variable().value()];
 }
 
 inline unsigned int Assignment::numberOfVariables() const {

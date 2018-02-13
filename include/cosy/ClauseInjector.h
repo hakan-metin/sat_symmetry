@@ -87,7 +87,7 @@ class ClauseInjector {
                   units("Number of Units", this),
                   esbp("Number of ESBP", this),
                   esbp_forcing("Number of ESBP Forcing", this),
-                  spfs("Number of spfs propagations", this)
+                  spfs("Number of SPFS propagations", this)
         {}
 
         CounterStat units;

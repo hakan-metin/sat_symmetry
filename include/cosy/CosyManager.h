@@ -13,12 +13,13 @@
 #include "cosy/Logging.h"
 #include "cosy/Order.h"
 #include "cosy/Stats.h"
+#include "cosy/Trail.h"
 
 namespace cosy {
 
 class CosyManager {
  public:
-    CosyManager(const Group& group, const Assignment& assignment);
+    CosyManager(const Group& group, const Trail& trail);
     ~CosyManager();
 
     void defineOrder(std::unique_ptr<Order>&& order);

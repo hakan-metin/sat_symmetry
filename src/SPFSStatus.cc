@@ -6,9 +6,10 @@ namespace cosy {
 
 
 SPFSStatus::SPFSStatus(const Permutation &permutation,
-                       const Assignment& assignment) :
+                       const Trail &trail) :
     _permutation(permutation),
-    _assignment(assignment),
+    _assignment(trail.assignment()),
+    _trail(trail),
     _lookup_index(0),
     _reasonOfInactive(kNoLiteralIndex),
     _amountForActive(0) {
@@ -31,7 +32,7 @@ void SPFSStatus::updateNotify(const Literal& literal) {
     if (isInactive)
         return;
 
-    if (_assignment.isDecision(inverse)) {
+    if (_trail.isDecision(inverse)) {
         if (_assignment.literalIsTrue(inverse)) {
             --_amountForActive;
         } else {
@@ -40,7 +41,7 @@ void SPFSStatus::updateNotify(const Literal& literal) {
         }
     }
 
-    if (_assignment.isDecision(literal)) {
+    if (_trail.isDecision(literal)) {
         if (!_assignment.literalIsAssigned(image)) {
             ++_amountForActive;
         } else if (_assignment.literalIsFalse(image)) {
@@ -65,11 +66,10 @@ void SPFSStatus::updateCancel(const Literal& literal) {
     const Literal image = _permutation.imageOf(literal);
     const Literal inverse = _permutation.inverseOf(literal);
 
-    const bool literalIsDecision = _assignment.isDecision(literal);
-    if (literalIsDecision && !_assignment.literalIsAssigned(image))
+    if (_trail.isDecision(literal) && !_assignment.literalIsAssigned(image))
         --_amountForActive;
 
-    if (_assignment.isDecision(inverse) && _assignment.literalIsTrue(inverse))
+    if (_trail.isDecision(inverse) && _assignment.literalIsTrue(inverse))
         ++_amountForActive;
 }
 
@@ -81,8 +81,7 @@ LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
     for (; _lookup_index < _notified.size(); ++_lookup_index) {
         literal = _notified[_lookup_index];
         const Literal image = _permutation.imageOf(literal);
-        const bool isDecisionLiteral = _assignment.isDecision(literal);
-        if (!( isDecisionLiteral || _assignment.literalIsTrue(image)))
+        if (!(_trail.isDecision(literal) || _assignment.literalIsTrue(image)))
             break;
     }
 

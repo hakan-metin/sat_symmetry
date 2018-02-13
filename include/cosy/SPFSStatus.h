@@ -13,13 +13,13 @@
 #include "cosy/Logging.h"
 #include "cosy/Permutation.h"
 #include "cosy/Stats.h"
-#include "cosy/SPFSStatus.h"
+#include "cosy/Trail.h"
 
 namespace cosy {
 
 class SPFSStatus {
  public:
-    SPFSStatus(const Permutation &permutation, const Assignment& assignment);
+    SPFSStatus(const Permutation &permutation, const Trail& trail);
     ~SPFSStatus();
 
     void updateNotify(const Literal& literal);
@@ -30,6 +30,7 @@ class SPFSStatus {
  private:
     const Permutation& _permutation;
     const Assignment& _assignment;
+    const Trail& _trail;
 
     std::deque<Literal> _notified;
     unsigned int _lookup_index;
