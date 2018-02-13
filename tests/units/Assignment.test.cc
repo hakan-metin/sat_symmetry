@@ -29,7 +29,7 @@ TEST(AssignmentTest, assignFromTruePositiveLiteral) {
     Assignment assignment(6);
     Literal literal(1);
 
-    assignment.assignFromTrueLiteral(literal);
+    assignment.assignFromTrueLiteral(literal, false);
     EXPECT_TRUE(assignment.variableIsAssigned(literal.variable()));
     EXPECT_TRUE(assignment.literalIsAssigned(literal));
     EXPECT_TRUE(assignment.literalIsTrue(literal));
@@ -40,7 +40,7 @@ TEST(AssignmentTest, assignFromTrueNegativeLiteral) {
     Assignment assignment(6);
     Literal literal(-4);
 
-    assignment.assignFromTrueLiteral(literal);
+    assignment.assignFromTrueLiteral(literal, false);
     EXPECT_TRUE(assignment.variableIsAssigned(literal.variable()));
     EXPECT_TRUE(assignment.literalIsAssigned(literal));
     EXPECT_TRUE(assignment.literalIsTrue(literal));
@@ -51,7 +51,7 @@ TEST(AssignmentTest, unassignLiteral) {
     Assignment assignment(6);
     Literal literal(-4);
 
-    assignment.assignFromTrueLiteral(literal);
+    assignment.assignFromTrueLiteral(literal, false);
     assignment.unassignLiteral(literal);
     EXPECT_FALSE(assignment.variableIsAssigned(literal.variable()));
     EXPECT_FALSE(assignment.literalIsAssigned(literal));
@@ -63,13 +63,13 @@ TEST(AssignmentTest, hasSameAssignmentValue) {
     Literal y(2);
 
     ASSERT_FALSE(assignment.hasSameAssignmentValue(x, y));
-    assignment.assignFromTrueLiteral(x);
+    assignment.assignFromTrueLiteral(x, false);
     ASSERT_FALSE(assignment.hasSameAssignmentValue(x, y));
-    assignment.assignFromTrueLiteral(y);
+    assignment.assignFromTrueLiteral(y, false);
     ASSERT_TRUE(assignment.hasSameAssignmentValue(x, y));
     assignment.unassignLiteral(x);
     ASSERT_FALSE(assignment.hasSameAssignmentValue(x, y));
-    assignment.assignFromTrueLiteral(x.negated());
+    assignment.assignFromTrueLiteral(x.negated(), false);
     ASSERT_FALSE(assignment.hasSameAssignmentValue(x, y));
     ASSERT_TRUE(assignment.hasSameAssignmentValue(x.negated(), y));
 }
@@ -78,7 +78,7 @@ TEST(AssignmentTest, getTrueLiteralForAssignedVariable) {
     Assignment assignment(6);
     Literal literal(-4);
 
-    assignment.assignFromTrueLiteral(literal);
+    assignment.assignFromTrueLiteral(literal, false);
     Literal lit =
         assignment.getTrueLiteralForAssignedVariable(literal.variable());
 
@@ -89,7 +89,7 @@ TEST(AssignmentTest, getFalseLiteralForAssignedVariable) {
     Assignment assignment(6);
     Literal literal(-4);
 
-    assignment.assignFromTrueLiteral(literal);
+    assignment.assignFromTrueLiteral(literal, false);
     Literal lit =
         assignment.getFalseLiteralForAssignedVariable(literal.variable());
 

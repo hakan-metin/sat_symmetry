@@ -65,34 +65,34 @@ TEST_F(CosyStatusTest, EmptyOrderNotify) {
 
 
 TEST_F(CosyStatusTest, DetectReducerInOrder) {
-    assignment.assignFromTrueLiteral(-1);
+    assignment.assignFromTrueLiteral(-1, false);
     status->updateNotify(-1);
 
-    assignment.assignFromTrueLiteral(2);
+    assignment.assignFromTrueLiteral(2, false);
     status->updateNotify(2);
 
     ASSERT_EQ(status->state(), REDUCER);
 }
 
 TEST_F(CosyStatusTest, DetectReducerNotInOrder) {
-    assignment.assignFromTrueLiteral(2);
+    assignment.assignFromTrueLiteral(2, false);
     status->updateNotify(2);
 
-    assignment.assignFromTrueLiteral(-1);
+    assignment.assignFromTrueLiteral(-1, false);
     status->updateNotify(-1);
 
     ASSERT_EQ(status->state(), REDUCER);
 }
 
 TEST_F(CosyStatusTest, DetectForcingMin) {
-    assignment.assignFromTrueLiteral(2);
+    assignment.assignFromTrueLiteral(2, false);
     status->updateNotify(2);
 
     ASSERT_EQ(status->state(), FORCE_LEX_LEADER);
 }
 
 TEST_F(CosyStatusTest, DetectForcingMax) {
-    assignment.assignFromTrueLiteral(-1);
+    assignment.assignFromTrueLiteral(-1, false);
     status->updateNotify(-1);
 
     ASSERT_EQ(status->state(), FORCE_LEX_LEADER);
