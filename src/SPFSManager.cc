@@ -17,20 +17,35 @@ SPFSManager::SPFSManager(const Group& group, const Assignment& assignment) :
 SPFSManager::~SPFSManager() {
 }
 
+long fibonacci(unsigned n)
+{
+    if (n < 2) return n;
+    return fibonacci(n-1) + fibonacci(n-2);
+}
+
 
 void SPFSManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.notify_time);
-        });
+
+    ScopedTimeDistributionUpdater time(&(_stats.total_time));
+    time.alsoUpdate(&(_stats.notify_time));
+
+    const BooleanVariable variable = literal.variable();
+    for (const unsigned int& index : _group.watch(variable)) {
+        const std::unique_ptr<SPFSStatus>& status = _statuses[index];
+        status->updateNotify(literal);
+    }
 }
 
 void SPFSManager::updateCancel(const Literal& literal) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.cancel_time);
-        });
+    ScopedTimeDistributionUpdater time(&_stats.total_time);
+    time.alsoUpdate(&_stats.cancel_time);
+
+    const BooleanVariable variable = literal.variable();
+    for (const unsigned int& index : _group.watch(variable)) {
+        const std::unique_ptr<SPFSStatus>& status = _statuses[index];
+        status->updateCancel(literal);
+    }
 }
 
 }  // namespace cosy

@@ -8,8 +8,6 @@
 #include <vector>
 #include <string>
 
-#define COSY_STATS
-
 #include "cosy/CosyManager.h"
 #include "cosy/ClauseInjector.h"
 #include "cosy/CNFModel.h"
@@ -22,7 +20,7 @@
 #include "cosy/SaucyReader.h"
 #include "cosy/SPFSManager.h"
 #include "cosy/SymmetryFinder.h"
-
+#include "cosy/Stats.h"
 
 namespace cosy {
 
@@ -157,12 +155,13 @@ template<class T>
 inline void SymmetryController<T>::updateNotify(T literal_s,
                                                 unsigned int level,
                                                 bool isDecision) {
-    cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
-    _assignment.assignFromTrueLiteral(literal_c);
-    if (_cosy_manager)
-        _cosy_manager->updateNotify(literal_c, &_injector);
+    const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
+    _assignment.assignFromTrueLiteral(literal_c, isDecision);
     if (_spfs_manager)
         _spfs_manager->updateNotify(literal_c, &_injector);
+
+    if (_cosy_manager)
+        _cosy_manager->updateNotify(literal_c, &_injector);
 }
 
 template<class T>
@@ -226,9 +225,15 @@ template<class T> inline void
 SymmetryController<T>::printStats() const {
     Printer::printSection(" Symmetry Stats ");
     _injector.printStats();
+
     if (_cosy_manager) {
         IF_STATS_ENABLED(_cosy_manager->printStats());
     }
+    if (_spfs_manager) {
+        IF_STATS_ENABLED(_spfs_manager->printStats());
+    }
+
+
 }
 
 template<class T> inline void
