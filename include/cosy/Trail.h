@@ -28,8 +28,14 @@ class Trail {
     bool isDecision(Literal literal) const {
         return _decisions.IsSet(literal.variable());
     }
-    unsigned int level(Literal literal) const;
-    const Reason& reason(Literal literal) const;
+
+    unsigned int level(Literal literal) const {
+        return _levels.at(literal.variable());
+    }
+
+    const Reason& reason(Literal literal) const {
+        return _reasons.at(literal.variable());
+    }
 
     const Assignment& assignment() const { return _assignment; }
 

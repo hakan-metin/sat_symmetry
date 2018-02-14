@@ -436,7 +436,8 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     trail.push_(p);
 
     if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
+        symmetry->updateNotify(p, decisionLevel(), getCRefIntoVector(from),
+                               from == CRef_Undef);
     }
 }
 
@@ -464,6 +465,7 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
+        learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
@@ -768,8 +770,8 @@ lbool Solver::solve_()
     // Set symmetry order
     if (symmetry != nullptr) {
         symmetry->enableSPFS();
-        symmetry->enableCosy(cosy::OrderMode::AUTO,
-                             cosy::ValueMode::TRUE_LESS_FALSE);
+        // symmetry->enableCosy(cosy::OrderMode::AUTO,
+        //                      cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
@@ -964,4 +966,17 @@ void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             attachClause(cr);
         }
     }
+}
+
+std::vector<Lit> Solver::getCRefIntoVector(CRef cr) {
+    std::vector<Lit> literals;
+
+    if (cr == CRef_Undef)
+        return literals;
+
+    const Clause& clause = ca[cr];
+    for (int i=0; i<clause.size(); i++)
+        literals.push_back(clause[i]);
+
+    return std::move(literals);
 }

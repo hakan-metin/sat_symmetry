@@ -25,7 +25,8 @@ class SPFSStatus {
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
-    LiteralIndex getFirstAsymetricLiteral();
+    bool isWeaklyActive() const;
+    void generateSPFS(BooleanVariable cause, ClauseInjector *injector);
 
  private:
     const Permutation& _permutation;
@@ -36,7 +37,10 @@ class SPFSStatus {
     unsigned int _lookup_index;
 
     LiteralIndex _reasonOfInactive;
+    LiteralIndex _firstAsymetricLiteral;
     int _amountForActive;
+
+    LiteralIndex getFirstAsymetricLiteral();
 };
 
 }  // namespace cosy

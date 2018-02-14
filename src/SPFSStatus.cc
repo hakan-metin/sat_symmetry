@@ -12,6 +12,7 @@ SPFSStatus::SPFSStatus(const Permutation &permutation,
     _trail(trail),
     _lookup_index(0),
     _reasonOfInactive(kNoLiteralIndex),
+    _firstAsymetricLiteral(kNoLiteralIndex),
     _amountForActive(0) {
 }
 
@@ -48,6 +49,8 @@ void SPFSStatus::updateNotify(const Literal& literal) {
             _reasonOfInactive = literal.index();
         }
     }
+
+    _firstAsymetricLiteral = getFirstAsymetricLiteral();
 }
 
 void SPFSStatus::updateCancel(const Literal& literal) {
@@ -63,6 +66,8 @@ void SPFSStatus::updateCancel(const Literal& literal) {
         return;
 
     _reasonOfInactive = kNoLiteralIndex;
+    _firstAsymetricLiteral = kNoLiteralIndex;
+
     const Literal image = _permutation.imageOf(literal);
     const Literal inverse = _permutation.inverseOf(literal);
 
@@ -72,6 +77,11 @@ void SPFSStatus::updateCancel(const Literal& literal) {
     if (_trail.isDecision(inverse) && _assignment.literalIsTrue(inverse))
         ++_amountForActive;
 }
+
+bool SPFSStatus::isWeaklyActive() const {
+    return  _firstAsymetricLiteral != kNoLiteralIndex;
+}
+
 
 LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
     if (!( _amountForActive == 0 &&  _reasonOfInactive == kNoLiteralIndex))
@@ -90,6 +100,42 @@ LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
 
     DCHECK(!_assignment.literalIsTrue(_permutation.imageOf(literal)));
     return literal.index();
+}
+
+void SPFSStatus::generateSPFS(BooleanVariable cause,
+                              ClauseInjector *injector) {
+    std::vector<Literal> literals;
+
+    DCHECK(_firstAsymetricLiteral != kNoLiteralIndex);
+
+    const Literal literal = Literal(_firstAsymetricLiteral);
+    // const BooleanVariable variable = literal.variable();
+
+    if (_trail.level(literal) == 0) {
+        literals.push_back(literal);
+        literals.push_back(_permutation.imageOf(literal).negated());
+    } else {
+        const Reason& reason = _trail.reason(literal);
+        CHECK_NE(reason, kNoReason);
+        for (const Literal& l : reason) {
+            if (_permutation.isTrivialImage(l))
+                literals.push_back(l);
+            else
+                literals.push_back(_permutation.imageOf(l));
+        }
+    }
+
+    std::string c = "";
+
+    for (auto& l : literals)
+        c += std::to_string(l.signedValue()) + "(" +
+            (_assignment.literalIsTrue(l) ? "T" :
+            _assignment.literalIsFalse(l) ? "F" : "U") + ") " ;
+    LOG(INFO) << c;
+
+    injector->addClause(ClauseInjector::Type::SPFS,
+                        cause, std::move(literals));
+
 }
 
 }  // namespace cosy

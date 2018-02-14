@@ -28,7 +28,8 @@ void SPFSManager::updateNotify(const Literal& literal,
         const std::unique_ptr<SPFSStatus>& status = _statuses[index];
         status->updateNotify(literal);
 
-        //        status->getFirstAsymetricLiteral();
+        if (status->isWeaklyActive())
+            status->generateSPFS(variable, injector);
     }
 }
 
