@@ -41,6 +41,9 @@ class SPFSStatus {
     int _amountForActive;
 
     LiteralIndex getFirstAsymetricLiteral();
+
+    void sortClause(std::vector<Literal>& clause);
+
 };
 
 }  // namespace cosy

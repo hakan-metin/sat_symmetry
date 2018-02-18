@@ -465,7 +465,9 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        confl = learntSymmetryClause(cosy::ClauseInjector::SPFS);
+        std::cout << "PROPAGATE" << p << std::endl;
+
+        confl = learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
@@ -511,10 +513,6 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
-        // if (confl == CRef_Undef && qhead == trail.size())
-        //     confl = learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
-
-
     }
     propagations += num_props;
     simpDB_props -= num_props;
@@ -955,8 +953,8 @@ void Solver::garbageCollect()
 
 CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
-        if (symmetry->hasClauseToInject(type)) {
-            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
+        if (symmetry->hasClauseToInject(type, p)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
 
             // Dirty make a copy of vector
             vec<Lit> sbp;
@@ -964,29 +962,10 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
                 sbp.push(l);
             }
 
-            // cancelUntil(level(var(sbp[1])));
+            if (value(sbp[0]) == l_True)
+                return CRef_Undef;
 
-            CRef cr = ca.alloc(sbp, true);
-            learnts.push(cr);
-            attachClause(cr);
-
-        }
-    }
-    return CRef_Undef;
-}
-
-CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
-    if (symmetry != nullptr) {
-        if (symmetry->hasClauseToInject(type)) {
-            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
-
-            // Dirty make a copy of vector
-            vec<Lit> sbp;
-            for (Lit l : vsbp) {
-                sbp.push(l);
-            }
-
-            // cancelUntil(level(var(sbp[1])));
+            printClause(sbp, true);
 
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
@@ -1013,4 +992,37 @@ std::vector<Lit> Solver::getCRefIntoVector(CRef cr) {
         literals.push_back(clause[i]);
 
     return std::move(literals);
+}
+void Solver::printClause(const vec<Lit>& clause, bool colored /* = false */) {
+   std::string color, default_color;
+
+    std::function<std::string(bool e, lbool lb)> f_color =
+	[] (bool e, lbool lb) {
+
+	const std::string red_color = "\033[1;31m";
+	const std::string green_color = "\033[1;32m";
+	const std::string white_color = "\033[1;37m";
+
+	if (!e)
+	    return std::string();
+
+	if (lb == l_False)
+	    return red_color;
+	else if (lb == l_True)
+	    return green_color;
+	else
+	    return white_color;
+    };
+
+    if (colored) {
+	default_color = "\033[0m";
+    }
+
+    for (int i=0; i<clause.size(); i++) {
+	color = f_color(colored, value(clause[i]));
+        std::cout << color << clause[i] << "(" << level(var(clause[i])) << ")"
+                  << default_color << " ";
+
+    }
+    std::cout << std::endl;
 }

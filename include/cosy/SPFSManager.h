@@ -24,10 +24,8 @@ class SPFSManager {
     SPFSManager(const Group& group, const Trail& trail);
     ~SPFSManager();
 
-    void updateNotify(const Literal& literal);
+    void updateNotify(const Literal& literal, ClauseInjector *injector);
     void updateCancel(const Literal& literal);
-
-    void searchSymmetricalClause(ClauseInjector *injector);
 
     void printStats() const { Printer::print(""); _stats.print(); }
 
