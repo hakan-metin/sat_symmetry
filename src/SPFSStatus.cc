@@ -49,8 +49,6 @@ void SPFSStatus::updateNotify(const Literal& literal) {
             _reasonOfInactive = literal.index();
         }
     }
-
-    _firstAsymetricLiteral = getFirstAsymetricLiteral();
 }
 
 void SPFSStatus::updateCancel(const Literal& literal) {
@@ -78,7 +76,8 @@ void SPFSStatus::updateCancel(const Literal& literal) {
         ++_amountForActive;
 }
 
-bool SPFSStatus::isWeaklyActive() const {
+bool SPFSStatus::isWeaklyActive() {
+    _firstAsymetricLiteral = getFirstAsymetricLiteral();
     return  _firstAsymetricLiteral != kNoLiteralIndex;
 }
 
@@ -102,6 +101,25 @@ LiteralIndex SPFSStatus::getFirstAsymetricLiteral() {
     return literal.index();
 }
 
+/* Sort rules:
+ * 1) Undef variable first in any order
+ * 2) sorted by decreasing level
+ * and lexicographic order if same level
+ */
+struct ClauseLt {
+    explicit ClauseLt(const Trail& t) : trail(t) {}
+    bool operator()(const Literal& a, const Literal b) {
+        const Assignment& assignment = trail.assignment();
+        if (assignment.bothLiteralsAreAssigned(a, b)) {
+            if (trail.level(a) == trail.level(b))
+                return a < b;
+            return trail.level(a) > trail.level(b);
+        }
+        return !assignment.literalIsAssigned(a);
+    }
+    const Trail& trail;
+};
+
 void SPFSStatus::generateSPFS(BooleanVariable cause,
                               ClauseInjector *injector) {
     std::vector<Literal> literals;
@@ -112,8 +130,8 @@ void SPFSStatus::generateSPFS(BooleanVariable cause,
     // const BooleanVariable variable = literal.variable();
 
     if (_trail.level(literal) == 0) {
-        literals.push_back(literal);
-        literals.push_back(_permutation.imageOf(literal).negated());
+        literals.push_back(_permutation.imageOf(literal));
+        literals.push_back(literal.negated());
     } else {
         const Reason& reason = _trail.reason(literal);
         CHECK_NE(reason, kNoReason);
@@ -123,19 +141,12 @@ void SPFSStatus::generateSPFS(BooleanVariable cause,
             else
                 literals.push_back(_permutation.imageOf(l));
         }
+        std::sort(literals.begin(), literals.end(), ClauseLt(_trail));
     }
-
-    std::string c = "";
-
-    for (auto& l : literals)
-        c += std::to_string(l.signedValue()) + "(" +
-            (_assignment.literalIsTrue(l) ? "T" :
-            _assignment.literalIsFalse(l) ? "F" : "U") + ") " ;
-    LOG(INFO) << c;
 
     injector->addClause(ClauseInjector::Type::SPFS,
                         cause, std::move(literals));
-
 }
+
 
 }  // namespace cosy

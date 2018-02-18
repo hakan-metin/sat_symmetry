@@ -465,7 +465,7 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
+        confl = learntSymmetryClause(cosy::ClauseInjector::SPFS);
         learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
@@ -511,6 +511,8 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
+        // if (confl == CRef_Undef && qhead == trail.size())
+        //     confl = learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
 
 
     }
@@ -951,21 +953,53 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
-        if (symmetry->hasClauseToInject(type, p)) {
-            std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
+        if (symmetry->hasClauseToInject(type)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
 
             // Dirty make a copy of vector
             vec<Lit> sbp;
             for (Lit l : vsbp) {
                 sbp.push(l);
             }
+
+            // cancelUntil(level(var(sbp[1])));
+
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
             attachClause(cr);
+
         }
     }
+    return CRef_Undef;
+}
+
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
+    if (symmetry != nullptr) {
+        if (symmetry->hasClauseToInject(type)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
+
+            // Dirty make a copy of vector
+            vec<Lit> sbp;
+            for (Lit l : vsbp) {
+                sbp.push(l);
+            }
+
+            // cancelUntil(level(var(sbp[1])));
+
+            CRef cr = ca.alloc(sbp, true);
+            learnts.push(cr);
+            attachClause(cr);
+
+            if (value(sbp[0]) == l_False)
+                return cr;
+
+            if (type == cosy::ClauseInjector::SPFS && value(sbp[0]) == l_Undef)
+                uncheckedEnqueue(sbp[0], cr);
+        }
+    }
+    return CRef_Undef;
 }
 
 std::vector<Lit> Solver::getCRefIntoVector(CRef cr) {

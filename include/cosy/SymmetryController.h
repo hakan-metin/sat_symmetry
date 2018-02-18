@@ -45,10 +45,10 @@ class SymmetryController {
                       std::vector<T> reason_s, bool isDecision);
     void updateCancel(T literal_s);
 
-    bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
+    bool hasClauseToInject(ClauseInjector::Type type, T literal_s);
     std::vector<T> clauseToInject(ClauseInjector::Type type, T literal_s);
 
-    bool hasClauseToInject(ClauseInjector::Type type) const;
+    bool hasClauseToInject(ClauseInjector::Type type);
     std::vector<T> clauseToInject(ClauseInjector::Type type);
 
     void printInfo() const;
@@ -69,7 +69,6 @@ class SymmetryController {
 
     std::vector<T> adaptVectorFrom(const std::vector<Literal>& literals);
     std::vector<cosy::Literal> adaptVectorTo(const std::vector<T>& literals);
-
 };
 
 // Implementation
@@ -166,7 +165,7 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
     _trail.enqueue(literal_c, level, reason_c, isDecision);
 
     if (_spfs_manager)
-        _spfs_manager->updateNotify(literal_c, &_injector);
+        _spfs_manager->updateNotify(literal_c);
 
     if (_cosy_manager)
         _cosy_manager->updateNotify(literal_c, &_injector);
@@ -175,6 +174,9 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
 template<class T>
 inline void SymmetryController<T>::updateCancel(T literal_s) {
     const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
+
+    if (!_trail.assignment().literalIsAssigned(literal_c))
+        return;
 
     /* SPFS Must be updated before unassignLiteral */
     if (_spfs_manager)
@@ -191,7 +193,7 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 
 template<class T> inline bool
 SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
-                                         T literal_s) const {
+                                         T literal_s) {
     const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     return _injector.hasClause(type, literal_c.variable());
 }
@@ -207,7 +209,10 @@ SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
 }
 
 template<class T> inline bool
-SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type) const {
+SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type) {
+    if (_spfs_manager)
+        _spfs_manager->searchSymmetricalClause(&_injector);
+
     return _injector.hasClause(type, kNoBooleanVariable);
 }
 

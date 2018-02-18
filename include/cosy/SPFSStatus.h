@@ -25,7 +25,7 @@ class SPFSStatus {
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
-    bool isWeaklyActive() const;
+    bool isWeaklyActive();
     void generateSPFS(BooleanVariable cause, ClauseInjector *injector);
 
  private:
