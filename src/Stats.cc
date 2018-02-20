@@ -82,7 +82,6 @@ std::string IntegerDistribution::valueString() const {
         " [" << min() << ", " << max() << "] "
            << average() << " " << stdDeviation() << " "  << sum();
     return stream.str();
-
 }
 
 void IntegerDistribution::add(int64 value) {
