@@ -42,9 +42,6 @@ class CosyStatusTest : public testing::Test {
 
         status = std::unique_ptr<CosyStatus>
             (new CosyStatus(*permutation, *order, assignment));
-
-        for (const Literal& literal : *order)
-            status->addLookupLiteral(literal);
     }
 
     std::unique_ptr<Permutation> permutation;
@@ -62,42 +59,6 @@ TEST_F(CosyStatusTest, EmptyOrderNotify) {
     status->updateNotify(3);
     ASSERT_EQ(status->state(), ACTIVE);
 }
-
-
-TEST_F(CosyStatusTest, DetectReducerInOrder) {
-    assignment.assignFromTrueLiteral(-1);
-    status->updateNotify(-1);
-
-    assignment.assignFromTrueLiteral(2);
-    status->updateNotify(2);
-
-    ASSERT_EQ(status->state(), REDUCER);
-}
-
-TEST_F(CosyStatusTest, DetectReducerNotInOrder) {
-    assignment.assignFromTrueLiteral(2);
-    status->updateNotify(2);
-
-    assignment.assignFromTrueLiteral(-1);
-    status->updateNotify(-1);
-
-    ASSERT_EQ(status->state(), REDUCER);
-}
-
-TEST_F(CosyStatusTest, DetectForcingMin) {
-    assignment.assignFromTrueLiteral(2);
-    status->updateNotify(2);
-
-    ASSERT_EQ(status->state(), FORCE_LEX_LEADER);
-}
-
-TEST_F(CosyStatusTest, DetectForcingMax) {
-    assignment.assignFromTrueLiteral(-1);
-    status->updateNotify(-1);
-
-    ASSERT_EQ(status->state(), FORCE_LEX_LEADER);
-}
-
 
 
 }  // namespace cosy

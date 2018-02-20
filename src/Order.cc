@@ -71,7 +71,7 @@ std::string Order::preview() const {
 std::string Order::valueModeString() const {
     CHECK_NE(_minimal, _maximal);
     if (_minimal == kFalseLiteralIndex) return std::string("False < True");
-    if (_minimal == kTrueLiteralIndex)  return std::string("True  < False");
+    if (_minimal == kTrueLiteralIndex)  return std::string("True < False");
     return std::string("UNKNOWN");
 }
 

@@ -7,9 +7,9 @@ namespace cosy {
 static const bool FLAGS_esbp = true;
 static const bool FLAGS_esbp_forcing = false;
 
-CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
+CosyManager::CosyManager(const Group& group, const Trail& trail) :
     _group(group),
-    _assignment(assignment),
+    _assignment(trail.assignment()),
     _order(nullptr) {
 }
 
@@ -40,10 +40,8 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.notify_time);
-        });
+    ScopedTimeDistributionUpdater time(&_stats.total_time);
+    time.alsoUpdate(&_stats.notify_time);
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
@@ -61,15 +59,12 @@ void CosyManager::updateNotify(const Literal& literal,
 }
 
 void CosyManager::updateCancel(const Literal& literal) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.cancel_time);
-        });
+    ScopedTimeDistributionUpdater time(&_stats.total_time);
+    time.alsoUpdate(&_stats.cancel_time);
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
-
         status->updateCancel(literal);
     }
 }

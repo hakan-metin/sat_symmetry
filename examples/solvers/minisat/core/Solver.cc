@@ -436,7 +436,8 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     trail.push_(p);
 
     if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
+        symmetry->updateNotify(p, decisionLevel(), getCRefIntoVector(from),
+                               from == CRef_Undef && decisionLevel() != 0);
     }
 }
 
@@ -464,6 +465,7 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
+        // confl = learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
@@ -509,7 +511,10 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
-
+        if (symmetry != nullptr && confl == CRef_Undef && qhead == trail.size()) {
+            symmetry->propagateFinishWithoutConflict();
+            confl = learntSymmetryClause(cosy::ClauseInjector::SPFS);
+        }
 
     }
     propagations += num_props;
@@ -767,8 +772,9 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-        symmetry->enableCosy(cosy::OrderMode::AUTO,
-                             cosy::ValueMode::TRUE_LESS_FALSE);
+        symmetry->enableSPFS();
+        // symmetry->enableCosy(cosy::OrderMode::AUTO,
+        //                      cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
@@ -948,7 +954,7 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
         if (symmetry->hasClauseToInject(type, p)) {
             std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
@@ -958,9 +964,98 @@ void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             for (Lit l : vsbp) {
                 sbp.push(l);
             }
+
+            if (value(sbp[0]) == l_True)
+                return CRef_Undef;
+
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
             attachClause(cr);
+
+            if (value(sbp[0]) == l_False)
+                return cr;
+
+            if (value(sbp[0]) == l_Undef)
+                uncheckedEnqueue(sbp[0], cr);
         }
     }
+    return CRef_Undef;
+}
+
+
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
+    if (symmetry != nullptr) {
+        if (symmetry->hasClauseToInject(type)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
+
+            // Dirty make a copy of vector
+            vec<Lit> sbp;
+            for (Lit l : vsbp) {
+                sbp.push(l);
+            }
+
+            cancelUntil(level(var(sbp[1])));
+
+            assert(value(sbp[0]) != l_True);
+            assert(value(sbp[1]) == l_False);
+
+            CRef cr = ca.alloc(sbp, true);
+            learnts.push(cr);
+            attachClause(cr);
+
+            if (value(sbp[0]) == l_False)
+                return cr;
+
+            if (value(sbp[0]) == l_Undef)
+                uncheckedEnqueue(sbp[0], cr);
+        }
+    }
+    return CRef_Undef;
+}
+
+std::vector<Lit> Solver::getCRefIntoVector(CRef cr) {
+    std::vector<Lit> literals;
+
+    if (cr == CRef_Undef)
+        return literals;
+
+    const Clause& clause = ca[cr];
+    for (int i=0; i<clause.size(); i++)
+        literals.push_back(clause[i]);
+
+    return std::move(literals);
+}
+
+void Solver::printClause(const vec<Lit>& clause, bool colored /* = false */) {
+   std::string color, default_color;
+
+    std::function<std::string(bool e, lbool lb)> f_color =
+	[] (bool e, lbool lb) {
+
+	const std::string red_color = "\033[1;31m";
+	const std::string green_color = "\033[1;32m";
+	const std::string white_color = "\033[1;37m";
+
+	if (!e)
+	    return std::string();
+
+	if (lb == l_False)
+	    return red_color;
+	else if (lb == l_True)
+	    return green_color;
+	else
+	    return white_color;
+    };
+
+    if (colored) {
+	default_color = "\033[0m";
+    }
+
+    for (int i=0; i<clause.size(); i++) {
+	color = f_color(colored, value(clause[i]));
+        std::cout << color << clause[i] << "(" << level(var(clause[i])) << ")"
+                  << default_color << " ";
+
+    }
+    std::cout << std::endl;
 }

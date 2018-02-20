@@ -1,46 +1,46 @@
 // Copyright 2017 Hakan Metin - LIP6
 
-#ifndef INCLUDE_COSY_COSYMANAGER_H_
-#define INCLUDE_COSY_COSYMANAGER_H_
+#ifndef INCLUDE_COSY_SPFSMANAGER_H_
+#define INCLUDE_COSY_SPFSMANAGER_H_
 
 #include <memory>
 #include <vector>
 
 #include "cosy/Assignment.h"
-#include "cosy/CosyStatus.h"
+#include "cosy/Clause.h"
 #include "cosy/ClauseInjector.h"
 #include "cosy/Group.h"
+#include "cosy/Literal.h"
 #include "cosy/Logging.h"
-#include "cosy/Order.h"
+#include "cosy/Permutation.h"
 #include "cosy/Stats.h"
+#include "cosy/SPFSStatus.h"
 #include "cosy/Trail.h"
 
 namespace cosy {
 
-class CosyManager {
+class SPFSManager {
  public:
-    CosyManager(const Group& group, const Trail& trail);
-    ~CosyManager();
+    SPFSManager(const Group& group, const Trail& trail);
+    ~SPFSManager();
 
-    void defineOrder(std::unique_ptr<Order>&& order);
-
-    void generateUnits(ClauseInjector *injector);
-    void updateNotify(const Literal& literal, ClauseInjector *injector);
+    void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
-    void summarize() const;
-    void printStats() const { _stats.print(); }
+    void generateClauses(ClauseInjector *injector);
+
+    void printStats() const { Printer::print(""); _stats.print(); }
 
  private:
     const Group& _group;
     const Assignment& _assignment;
-    std::unique_ptr<Order> _order;
+    const Trail& _trail;
 
-    std::vector< std::unique_ptr<CosyStatus> > _statuses;
+    std::vector< std::unique_ptr<SPFSStatus> > _statuses;
 
     struct Stats : public StatsGroup {
-        Stats() : StatsGroup("Cosy Manager"),
-                  total_time("Cosy total time", this),
+        Stats() : StatsGroup("SPFS Manager"),
+                  total_time("SPFS total time", this),
                   notify_time(" |- notify time", this),
                   cancel_time(" |- cancel time", this)
         {}
@@ -50,12 +50,11 @@ class CosyManager {
     };
     Stats _stats;
 
-    DISALLOW_COPY_AND_ASSIGN(CosyManager);
+    DISALLOW_COPY_AND_ASSIGN(SPFSManager);
 };
 
 }  // namespace cosy
-
-#endif  // INCLUDE_COSY_COSYMANAGER_H_
+#endif  // INCLUDE_COSY_SPFSMANAGER_H_
 /*
  * Local Variables:
  * mode: c++

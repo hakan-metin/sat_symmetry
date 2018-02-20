@@ -38,6 +38,7 @@ class Injector {
 
         return _clauses.at(cause).size() > 0;
     }
+
     std::vector<Literal> getClause(BooleanVariable cause) {
         std::vector<Literal> literals;
 
@@ -61,7 +62,8 @@ class ClauseInjector {
         UNITS,
         ESBP,
         ESBP_FORCING,
-        NR_TYPES
+        SPFS,
+        NR_TYPES  /* Must be last item */
     };
 
     ClauseInjector();
@@ -85,11 +87,14 @@ class ClauseInjector {
         Stats() : StatsGroup("Clause Injector"),
                   units("Number of Units", this),
                   esbp("Number of ESBP", this),
-                  esbp_forcing("Number of ESBP Forcing", this) {}
+                  esbp_forcing("Number of ESBP Forcing", this),
+                  spfs("Number of SPFS propagations", this)
+        {}
 
         CounterStat units;
         CounterStat esbp;
         CounterStat esbp_forcing;
+        CounterStat spfs;
     };
     Stats _stats;
 
