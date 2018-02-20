@@ -228,8 +228,6 @@ std::string CosyStatus::debugString() const {
             str += "F ";
         else
             str += "U ";
-
-
     }
     return str;
 }
