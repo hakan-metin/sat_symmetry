@@ -24,15 +24,18 @@ class CosyManager {
 
     void defineOrder(std::unique_ptr<Order>&& order);
 
-    void generateUnits(ClauseInjector *injector);
-    void updateNotify(const Literal& literal, ClauseInjector *injector);
+    void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
+
+    void generateUnits(ClauseInjector *injector);
+    void generateClauses(ClauseInjector *injector);
 
     void summarize() const;
     void printStats() const { _stats.print(); }
 
  private:
     const Group& _group;
+    const Trail& _trail;
     const Assignment& _assignment;
     std::unique_ptr<Order> _order;
 

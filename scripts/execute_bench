@@ -58,6 +58,7 @@ do
     SUM=$(echo $SUM + $WCTIME | bc)
     PAR2=$(echo $PAR2 + $WCTIME | bc)
     [ $TIMEOUT == "true" ] && PAR2=$(echo $PAR2 + $WCTIME | bc)
+    echo "$SOLVER,$file,$WCTIME,$RESULT" >> "$SOLVER.csv"
 done
 
 echo ""

@@ -170,7 +170,7 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
         _spfs_manager->updateNotify(literal_c);
 
     if (_cosy_manager)
-        _cosy_manager->updateNotify(literal_c, &_injector);
+        _cosy_manager->updateNotify(literal_c);
 }
 
 template<class T>
@@ -192,6 +192,9 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 
 template<class T>
 inline void SymmetryController<T>::propagateFinishWithoutConflict() {
+    if (_cosy_manager)
+        _cosy_manager->generateClauses(&_injector);
+
     if (_spfs_manager)
         _spfs_manager->generateClauses(&_injector);
 }

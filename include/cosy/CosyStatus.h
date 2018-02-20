@@ -14,6 +14,7 @@
 #include "cosy/Order.h"
 #include "cosy/Permutation.h"
 #include "cosy/Logging.h"
+#include "cosy/Trail.h"
 
 namespace cosy {
 
@@ -27,7 +28,7 @@ enum CosyState {
 class CosyStatus {
  public:
     CosyStatus(const Permutation &permutation, const Order &order,
-               const Assignment& assignment);
+               const Trail& trail);
     ~CosyStatus();
 
     void addLookupLiteral(const Literal& literal);
@@ -38,15 +39,15 @@ class CosyStatus {
     CosyState state() const { return _state; }
 
     void generateUnitClauseOnInverting(ClauseInjector *injector);
-    void generateESBP(BooleanVariable reason, ClauseInjector *injector);
-    void generateForceLexLeaderESBP(BooleanVariable reason,
-                                    ClauseInjector *injector);
+    void generateESBP(ClauseInjector *injector);
+    void generateForceLexLeaderESBP(ClauseInjector *injector);
 
     std::string debugString() const;
 
  private:
     const Permutation& _permutation;
     const Order& _order;
+    const Trail& _trail;
     const Assignment& _assignment;
 
     unsigned int _lookup_index;
