@@ -39,10 +39,6 @@ class SPFSStatus {
 
     LiteralIndex _reasonOfInactive;
     int _amountForActive;
-
-
-    void sortClause(std::vector<Literal>& clause);
-
 };
 
 }  // namespace cosy

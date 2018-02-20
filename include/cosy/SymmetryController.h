@@ -71,7 +71,6 @@ class SymmetryController {
 
     std::vector<T> adaptVectorFrom(const std::vector<Literal>& literals);
     std::vector<cosy::Literal> adaptVectorTo(const std::vector<T>& literals);
-
 };
 
 // Implementation
@@ -195,7 +194,6 @@ template<class T>
 inline void SymmetryController<T>::propagateFinishWithoutConflict() {
     if (_spfs_manager)
         _spfs_manager->generateClauses(&_injector);
-
 }
 
 
