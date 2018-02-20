@@ -465,10 +465,6 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        // confl = learntSymmetryClause(cosy::ClauseInjector::SPFS, p);
-        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
-
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
             Lit blocker = i->blocker;
@@ -514,6 +510,10 @@ CRef Solver::propagate()
         if (symmetry != nullptr && confl == CRef_Undef && qhead == trail.size()) {
             symmetry->propagateFinishWithoutConflict();
             confl = learntSymmetryClause(cosy::ClauseInjector::SPFS);
+            if (confl == CRef_Undef)
+                confl = learntSymmetryClause(cosy::ClauseInjector::ESBP);
+            if (confl == CRef_Undef)
+                learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
         }
 
     }
@@ -772,9 +772,9 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-        symmetry->enableSPFS();
-        // symmetry->enableCosy(cosy::OrderMode::AUTO,
-        //                      cosy::ValueMode::TRUE_LESS_FALSE);
+        // symmetry->enableSPFS();
+        symmetry->enableCosy(cosy::OrderMode::AUTO,
+                             cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;

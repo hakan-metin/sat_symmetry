@@ -5,10 +5,11 @@
 namespace cosy {
 
 static const bool FLAGS_esbp = true;
-static const bool FLAGS_esbp_forcing = false;
+static const bool FLAGS_esbp_forcing = true;
 
 CosyManager::CosyManager(const Group& group, const Trail& trail) :
     _group(group),
+    _trail(trail),
     _assignment(trail.assignment()),
     _order(nullptr) {
 }
@@ -22,7 +23,7 @@ void CosyManager::defineOrder(std::unique_ptr<Order>&& order) {
 
     for (const std::unique_ptr<Permutation>& perm : _group.permutations()) {
         std::unique_ptr<CosyStatus> status
-            (new CosyStatus(*perm, *_order, _assignment));
+            (new CosyStatus(*perm, *_order, _trail));
         _statuses.emplace_back(status.release());
     }
 
@@ -33,28 +34,15 @@ void CosyManager::defineOrder(std::unique_ptr<Order>&& order) {
     }
 }
 
-void CosyManager::generateUnits(ClauseInjector *injector) {
-    for (const std::unique_ptr<CosyStatus>& status : _statuses)
-        status->generateUnitClauseOnInverting(injector);
-}
 
-void CosyManager::updateNotify(const Literal& literal,
-                               ClauseInjector *injector) {
+void CosyManager::updateNotify(const Literal& literal) {
     ScopedTimeDistributionUpdater time(&_stats.total_time);
     time.alsoUpdate(&_stats.notify_time);
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
-
         status->updateNotify(literal);
-
-        if (FLAGS_esbp && status->state() == REDUCER) {
-            status->generateESBP(literal.variable(), injector);
-            break;
-        } else if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
-            status->generateForceLexLeaderESBP(literal.variable(), injector);
-        }
     }
 }
 
@@ -68,6 +56,32 @@ void CosyManager::updateCancel(const Literal& literal) {
         status->updateCancel(literal);
     }
 }
+
+void CosyManager::generateUnits(ClauseInjector *injector) {
+    for (const std::unique_ptr<CosyStatus>& status : _statuses)
+        status->generateUnitClauseOnInverting(injector);
+}
+
+void CosyManager::generateClauses(ClauseInjector *injector) {
+    if (FLAGS_esbp) {
+        for (const std::unique_ptr<CosyStatus>& status : _statuses) {
+            if (status->state() == REDUCER) {
+                status->generateESBP(injector);
+                return;
+            }
+        }
+    }
+
+    if (FLAGS_esbp_forcing) {
+        for (const std::unique_ptr<CosyStatus>& status : _statuses) {
+            if (status->state() == FORCE_LEX_LEADER) {
+                status->generateForceLexLeaderESBP(injector);
+                break;
+            }
+        }
+    }
+}
+
 
 void CosyManager::summarize() const {
     Printer::printStat("Variable Order", _order->variableModeString());
