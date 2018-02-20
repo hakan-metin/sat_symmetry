@@ -152,6 +152,18 @@ class CounterStat : public Stat {
  private:
     int64 _value;
 };
+/*----------------------------------------------------------------------------*/
+
+class IntegerDistribution : public DistributionStat {
+ public:
+    explicit IntegerDistribution(const std::string& name)
+        : DistributionStat(name) {}
+    IntegerDistribution(const std::string& name, StatsGroup* group)
+        : DistributionStat(name, group) {}
+    std::string valueString() const override;
+    void add(int64 value);
+};
+
 
 
 

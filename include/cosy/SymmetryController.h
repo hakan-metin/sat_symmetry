@@ -252,6 +252,7 @@ SymmetryController<T>::adaptVectorTo(const std::vector<T>& literals) {
 
 template<class T> inline void
 SymmetryController<T>::printStats() const {
+    _trail.printStats();
     Printer::printSection(" Symmetry Stats ");
     _injector.printStats();
 

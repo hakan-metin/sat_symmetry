@@ -75,4 +75,19 @@ std::string TimeDistribution::valueString() const {
 }
 
 
+std::string IntegerDistribution::valueString() const {
+    std::stringstream stream;
+
+    stream << std::fixed << std::setprecision(0)  << _num <<
+        " [" << min() << ", " << max() << "] "
+           << average() << " " << stdDeviation() << " "  << sum();
+    return stream.str();
+
+}
+
+void IntegerDistribution::add(int64 value) {
+    addToDistribution(static_cast<double>(value));
+}
+
+
 }  // namespace cosy
