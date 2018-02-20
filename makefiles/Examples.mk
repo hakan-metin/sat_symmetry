@@ -9,11 +9,11 @@ $(call REQUIRE-DIR, $(BIN)CNFSaucySymmetries)
 $(call REQUIRE-DIR, $(BIN)minisat)
 
 $(BIN)CNFBlissSymmetries: LDFLAGS += -lcosy -lbliss  -lz
-$(BIN)CNFBlissSymmetries:  default $(EXAMPLES)CNFBlissSymmetries.cc
+$(BIN)CNFBlissSymmetries: $(EXAMPLES)CNFBlissSymmetries.cc | default
 	$(call cmd-cxx-bin, $@, $<, $(LDFLAGS))
 
 $(BIN)CNFSaucySymmetries: LDFLAGS += -lcosy -lsaucy  -lz
-$(BIN)CNFSaucySymmetries:  default $(EXAMPLES)CNFSaucySymmetries.cc
+$(BIN)CNFSaucySymmetries: $(EXAMPLES)CNFSaucySymmetries.cc | default
 	$(call cmd-cxx-bin, $@, $<, $(LDFLAGS))
 
 
