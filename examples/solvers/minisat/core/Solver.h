@@ -75,6 +75,7 @@ public:
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    CRef learntSymmetryClause(cosy::ClauseInjector::Type type);
 
     std::vector<Lit> getCRefIntoVector(CRef cr);
     void printClause(const vec<Lit>& clause, bool colored  = false);

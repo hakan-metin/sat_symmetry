@@ -18,8 +18,7 @@ SPFSManager::SPFSManager(const Group& group, const Trail& trail) :
 SPFSManager::~SPFSManager() {
 }
 
-void SPFSManager::updateNotify(const Literal& literal,
-                               ClauseInjector *injector) {
+void SPFSManager::updateNotify(const Literal& literal) {
     ScopedTimeDistributionUpdater time(&(_stats.total_time));
     time.alsoUpdate(&(_stats.notify_time));
 
@@ -27,9 +26,6 @@ void SPFSManager::updateNotify(const Literal& literal,
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<SPFSStatus>& status = _statuses[index];
         status->updateNotify(literal);
-
-        if (status->isWeaklyActive())
-            status->generateSPFS(variable, injector);
     }
 }
 
@@ -43,5 +39,18 @@ void SPFSManager::updateCancel(const Literal& literal) {
         status->updateCancel(literal);
     }
 }
+
+void SPFSManager::generateClauses(ClauseInjector *injector) {
+    for (const std::unique_ptr<SPFSStatus>& status : _statuses) {
+        if (status->isWeaklyActive()) {
+            LiteralIndex index = status->getFirstAsymetricLiteral();
+            if (index != kNoLiteralIndex) {
+                status->generateSPFS(Literal(index), injector);
+                break;
+            }
+        }
+    }
+}
+
 
 }  // namespace cosy

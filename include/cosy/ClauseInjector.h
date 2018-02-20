@@ -38,6 +38,7 @@ class Injector {
 
         return _clauses.at(cause).size() > 0;
     }
+
     std::vector<Literal> getClause(BooleanVariable cause) {
         std::vector<Literal> literals;
 

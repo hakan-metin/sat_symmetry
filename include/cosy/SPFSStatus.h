@@ -25,8 +25,9 @@ class SPFSStatus {
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
-    bool isWeaklyActive();
-    void generateSPFS(BooleanVariable cause, ClauseInjector *injector);
+    bool isWeaklyActive() const;
+    LiteralIndex getFirstAsymetricLiteral();
+    void generateSPFS(Literal literal, ClauseInjector *injector);
 
  private:
     const Permutation& _permutation;
@@ -37,10 +38,8 @@ class SPFSStatus {
     unsigned int _lookup_index;
 
     LiteralIndex _reasonOfInactive;
-    LiteralIndex _firstAsymetricLiteral;
     int _amountForActive;
 
-    LiteralIndex getFirstAsymetricLiteral();
 
     void sortClause(std::vector<Literal>& clause);
 

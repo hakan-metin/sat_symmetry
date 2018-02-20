@@ -45,6 +45,8 @@ class SymmetryController {
                       std::vector<T> reason_s, bool isDecision);
     void updateCancel(T literal_s);
 
+    void propagateFinishWithoutConflict();
+
     bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
     std::vector<T> clauseToInject(ClauseInjector::Type type, T literal_s);
 
@@ -165,9 +167,8 @@ inline void SymmetryController<T>::updateNotify(T literal_s,
     const Reason& reason_c = adaptVectorTo(reason_s);
     _trail.enqueue(literal_c, level, reason_c, isDecision);
 
-    LOG(INFO) << "Notify " << literal_c.signedValue();
     if (_spfs_manager)
-        _spfs_manager->updateNotify(literal_c, &_injector);
+        _spfs_manager->updateNotify(literal_c);
 
     if (_cosy_manager)
         _cosy_manager->updateNotify(literal_c, &_injector);
@@ -189,6 +190,14 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 
     _injector.removeClause(literal_c.variable());
 }
+
+template<class T>
+inline void SymmetryController<T>::propagateFinishWithoutConflict() {
+    if (_spfs_manager)
+        _spfs_manager->generateClauses(&_injector);
+
+}
+
 
 template<class T> inline bool
 SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
