@@ -263,7 +263,7 @@ Lit Solver::pickBranchLit()
 |        rest of literals. There may be others from the same level though.
 |
 |________________________________________________________________________________________________@*/
-void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
+void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, bool &out_symmetry)
 {
     int pathC = 0;
     Lit p     = lit_Undef;
@@ -273,9 +273,14 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
     out_learnt.push();      // (leave room for the asserting literal)
     int index   = trail.size() - 1;
 
+    out_symmetry = false;
+
     do{
         assert(confl != CRef_Undef); // (otherwise should be UIP)
         Clause& c = ca[confl];
+
+        if (c.symmetry())
+            out_symmetry = true;
 
         if (c.learnt())
             claBumpActivity(c);
@@ -436,8 +441,15 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     trail.push_(p);
 
     if (symmetry != nullptr) {
+        bool isDecision = (from == CRef_Undef && decisionLevel() != 0);
+        bool isReasonSymmetric;
+        if (decisionLevel() != 0)
+            isReasonSymmetric = (from != CRef_Undef && ca[from].symmetry());
+        else
+            isReasonSymmetric =
+                symmetry_units.find(var(p)) == symmetry_units.end();
         symmetry->updateNotify(p, decisionLevel(), getCRefIntoVector(from),
-                               from == CRef_Undef && decisionLevel() != 0);
+                               isReasonSymmetric, isDecision);
     }
 }
 
@@ -510,7 +522,7 @@ CRef Solver::propagate()
         if (symmetry != nullptr && confl == CRef_Undef && qhead == trail.size()) {
             symmetry->propagateFinishWithoutConflict();
             confl = learntSymmetryClause(cosy::ClauseInjector::SPFS);
-            if (confl == CRef_Undef)
+            if (confl == CRef_Undef && qhead == trail.size())
                 confl = learntSymmetryClause(cosy::ClauseInjector::ESBP);
             if (confl == CRef_Undef)
                 learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
@@ -631,6 +643,7 @@ lbool Solver::search(int nof_conflicts)
 {
     assert(ok);
     int         backtrack_level;
+    bool        symmetry;
     int         conflictC = 0;
     vec<Lit>    learnt_clause;
     starts++;
@@ -643,13 +656,15 @@ lbool Solver::search(int nof_conflicts)
             if (decisionLevel() == 0) return l_False;
 
             learnt_clause.clear();
-            analyze(confl, learnt_clause, backtrack_level);
+            analyze(confl, learnt_clause, backtrack_level, symmetry);
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
                 uncheckedEnqueue(learnt_clause[0]);
+                if (symmetry)
+                    symmetry_units.insert(var(learnt_clause[0]));
             }else{
-                CRef cr = ca.alloc(learnt_clause, true);
+                CRef cr = ca.alloc(learnt_clause, true, symmetry);
                 learnts.push(cr);
                 attachClause(cr);
                 claBumpActivity(ca[cr]);
@@ -772,7 +787,7 @@ lbool Solver::solve_()
 
     // Set symmetry order
     if (symmetry != nullptr) {
-        // symmetry->enableSPFS();
+        symmetry->enableSPFS();
         symmetry->enableCosy(cosy::OrderMode::AUTO,
                              cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
@@ -996,10 +1011,18 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
 
             cancelUntil(level(var(sbp[1])));
 
+            if (value(sbp[1]) != l_False || value(sbp[0]) == l_True) {
+                printClause(sbp, true);
+                std::cout << type << std::endl;
+            }
+
             assert(value(sbp[0]) != l_True);
             assert(value(sbp[1]) == l_False);
 
-            CRef cr = ca.alloc(sbp, true);
+            const bool symmetry = (type == cosy::ClauseInjector::ESBP ||
+                                   type == cosy::ClauseInjector::ESBP_FORCING);
+
+            CRef cr = ca.alloc(sbp, true, symmetry);
             learnts.push(cr);
             attachClause(cr);
 

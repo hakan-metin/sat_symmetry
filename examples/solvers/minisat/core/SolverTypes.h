@@ -130,18 +130,20 @@ class Clause {
     struct {
         unsigned mark      : 2;
         unsigned learnt    : 1;
+        unsigned symmetry  : 1;
         unsigned has_extra : 1;
         unsigned reloced   : 1;
-        unsigned size      : 27; }                            header;
+        unsigned size      : 26; }                            header;
     union { Lit lit; float act; uint32_t abs; CRef rel; } data[0];
 
     friend class ClauseAllocator;
 
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     template<class V>
-    Clause(const V& ps, bool use_extra, bool learnt) {
+        Clause(const V& ps, bool use_extra, bool learnt, bool symmetry) {
         header.mark      = 0;
         header.learnt    = learnt;
+        header.symmetry  = symmetry;
         header.has_extra = use_extra;
         header.reloced   = 0;
         header.size      = ps.size();
@@ -169,6 +171,7 @@ public:
     void         shrink      (int i)         { assert(i <= size()); if (header.has_extra) data[header.size-i] = data[header.size]; header.size -= i; }
     void         pop         ()              { shrink(1); }
     bool         learnt      ()      const   { return header.learnt; }
+    bool         symmetry    ()      const   { return header.symmetry; }
     bool         has_extra   ()      const   { return header.has_extra; }
     uint32_t     mark        ()      const   { return header.mark; }
     void         mark        (uint32_t m)    { header.mark = m; }
@@ -212,14 +215,14 @@ class ClauseAllocator : public RegionAllocator<uint32_t>
         RegionAllocator<uint32_t>::moveTo(to); }
 
     template<class Lits>
-    CRef alloc(const Lits& ps, bool learnt = false)
+        CRef alloc(const Lits& ps, bool learnt = false, bool symmetry = false)
     {
         assert(sizeof(Lit)      == sizeof(uint32_t));
         assert(sizeof(float)    == sizeof(uint32_t));
         bool use_extra = learnt | extra_clause_field;
 
         CRef cid = RegionAllocator<uint32_t>::alloc(clauseWord32Size(ps.size(), use_extra));
-        new (lea(cid)) Clause(ps, use_extra, learnt);
+        new (lea(cid)) Clause(ps, use_extra, learnt, symmetry);
 
         return cid;
     }
@@ -243,7 +246,7 @@ class ClauseAllocator : public RegionAllocator<uint32_t>
 
         if (c.reloced()) { cr = c.relocation(); return; }
 
-        cr = to.alloc(c, c.learnt());
+        cr = to.alloc(c, c.learnt(), c.symmetry());
         c.relocate(cr);
 
         // Copy extra data-fields:

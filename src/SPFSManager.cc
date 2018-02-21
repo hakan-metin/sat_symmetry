@@ -40,12 +40,19 @@ void SPFSManager::updateCancel(const Literal& literal) {
     }
 }
 
-void SPFSManager::generateClauses(ClauseInjector *injector) {
-    for (const std::unique_ptr<SPFSStatus>& status : _statuses) {
+void SPFSManager::generateClauses(const std::vector<bool>& inactives,
+                                  ClauseInjector *injector) {
+    for (unsigned int i=0; i < _statuses.size(); i++) {
+        if (inactives.size() > 0 && inactives[i])
+            continue;
+        const std::unique_ptr<SPFSStatus>& status = _statuses[i];
         if (status->isWeaklyActive()) {
             LiteralIndex index = status->getFirstAsymetricLiteral();
             if (index != kNoLiteralIndex) {
-                status->generateSPFS(Literal(index), injector);
+                const Literal literal = Literal(index);
+                if (_trail.isReasonSymmetric(literal))
+                    continue;
+                status->generateSPFS(literal, injector);
                 break;
             }
         }

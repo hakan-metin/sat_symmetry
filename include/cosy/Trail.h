@@ -23,7 +23,7 @@ class Trail {
 
     void resize(unsigned int n);
     void enqueue(Literal literal, unsigned int level,
-                 const Reason& reason, bool isDecision);
+                 const Reason& reason, bool isReasonSymmetric, bool isDecision);
     Literal dequeue();
 
     bool isDecision(Literal literal) const {
@@ -38,6 +38,10 @@ class Trail {
         return _reasons.at(literal.variable());
     }
 
+    bool isReasonSymmetric(Literal literal) const {
+        return _reasonsAreSymmetrics.at(literal.variable());
+    }
+
     const Assignment& assignment() const { return _assignment; }
 
     void printStats() const { _stats.print(true); }
@@ -48,6 +52,7 @@ class Trail {
     Bitset64<BooleanVariable> _decisions;
     std::unordered_map<BooleanVariable, int> _levels;
     std::unordered_map<BooleanVariable, Reason> _reasons;
+    std::unordered_map<BooleanVariable, bool> _reasonsAreSymmetrics;
 
     struct Stats : public StatsGroup {
         Stats() : StatsGroup(" Trail "),
@@ -71,17 +76,23 @@ inline void Trail::resize(unsigned int n) {
 }
 
 inline void Trail::enqueue(Literal literal, unsigned int level,
-                           const Reason& reason, bool isDecision) {
+                           const Reason& reason, bool isReasonSymmetric,
+                           bool isDecision) {
     ScopedTimeDistributionUpdater time(&_stats.total_time);
     time.alsoUpdate(&_stats.enqueue_time);
 
     const BooleanVariable variable = literal.variable();
+
+    // In level 0 cannot be decision or symmetric reason
+    CHECK(level != 0 || !isDecision);
+    /* CHECK(level != 0 || !isReasonSymmetric); */
 
     _trail.push_back(literal);
     _assignment.assignFromTrueLiteral(literal);
     _decisions.Set(variable, isDecision);
     _levels[variable] = level;
     _reasons[variable] = reason;
+    _reasonsAreSymmetrics[variable] = isReasonSymmetric;
     _stats.levels.add(level);
 }
 
@@ -97,6 +108,7 @@ inline Literal Trail::dequeue() {
     _decisions.Clear(variable);
     _levels.erase(_levels.find(variable));
     _reasons.erase(_reasons.find(variable));
+    _reasonsAreSymmetrics.erase(_reasonsAreSymmetrics.find(variable));
 
     return literal;
 }
