@@ -4,7 +4,7 @@
 
 namespace cosy {
 
-static const bool FLAGS_esbp = true;
+static const bool FLAGS_esbp = false;
 static const bool FLAGS_esbp_forcing = true;
 
 CosyManager::CosyManager(const Group& group, const Trail& trail) :
@@ -81,6 +81,15 @@ void CosyManager::generateClauses(ClauseInjector *injector) {
         }
     }
 }
+
+std::vector<bool> CosyManager::inactivePermutations() const {
+    std::vector<bool> inactives;
+    for (const std::unique_ptr<CosyStatus>& status : _statuses) {
+        inactives.push_back(status->state() == INACTIVE);
+    }
+    return std::move(inactives);
+}
+
 
 
 void CosyManager::summarize() const {

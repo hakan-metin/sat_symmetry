@@ -30,6 +30,8 @@ class CosyManager {
     void generateUnits(ClauseInjector *injector);
     void generateClauses(ClauseInjector *injector);
 
+    std::vector<bool> inactivePermutations() const;
+
     void summarize() const;
     void printStats() const { _stats.print(); }
 

@@ -42,7 +42,8 @@ class SymmetryController {
     void enableSPFS();
 
     void updateNotify(T literal_s, unsigned int level,
-                      std::vector<T> reason_s, bool isDecision);
+                      std::vector<T> reason_s,  bool isReasonSymmetric,
+                      bool isDecision);
     void updateCancel(T literal_s);
 
     void propagateFinishWithoutConflict();
@@ -161,10 +162,11 @@ template<class T>
 inline void SymmetryController<T>::updateNotify(T literal_s,
                                                 unsigned int level,
                                                 std::vector<T> reason_s,
+                                                bool isReasonSymmetric,
                                                 bool isDecision) {
     const cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     const Reason& reason_c = adaptVectorTo(reason_s);
-    _trail.enqueue(literal_c, level, reason_c, isDecision);
+    _trail.enqueue(literal_c, level, reason_c, isReasonSymmetric, isDecision);
 
     if (_spfs_manager)
         _spfs_manager->updateNotify(literal_c);
@@ -192,11 +194,18 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 
 template<class T>
 inline void SymmetryController<T>::propagateFinishWithoutConflict() {
+    std::vector<bool> inactives;
     if (_cosy_manager)
-        _cosy_manager->generateClauses(&_injector);
+        inactives = _cosy_manager->inactivePermutations();
 
     if (_spfs_manager)
-        _spfs_manager->generateClauses(&_injector);
+        _spfs_manager->generateClauses(inactives, &_injector);
+
+    /* If SPFS already generate a clause, we do nothing */
+    const ClauseInjector::Type type = ClauseInjector::Type::SPFS;
+    if (_cosy_manager && !_injector.hasClause(type, kNoBooleanVariable))
+        _cosy_manager->generateClauses(&_injector);
+
 }
 
 
