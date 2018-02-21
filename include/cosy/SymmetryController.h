@@ -205,7 +205,6 @@ inline void SymmetryController<T>::propagateFinishWithoutConflict() {
     const ClauseInjector::Type type = ClauseInjector::Type::SPFS;
     if (_cosy_manager && !_injector.hasClause(type, kNoBooleanVariable))
         _cosy_manager->generateClauses(&_injector);
-
 }
 
 
