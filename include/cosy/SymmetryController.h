@@ -194,12 +194,8 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
 
 template<class T>
 inline void SymmetryController<T>::propagateFinishWithoutConflict() {
-    std::vector<bool> inactives;
-    if (_cosy_manager)
-        inactives = _cosy_manager->inactivePermutations();
-
     if (_spfs_manager)
-        _spfs_manager->generateClauses(inactives, &_injector);
+        _spfs_manager->generateClauses(&_injector);
 
     /* If SPFS already generate a clause, we do nothing */
     const ClauseInjector::Type type = ClauseInjector::Type::SPFS;

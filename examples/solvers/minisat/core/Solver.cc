@@ -288,6 +288,9 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel, bool &o
         for (int j = (p == lit_Undef) ? 0 : 1; j < c.size(); j++){
             Lit q = c[j];
 
+            if (level(var(q)) == 0 && symmetry_units.find(var(q)) != symmetry_units.end())
+                out_symmetry = true;
+
             if (!seen[var(q)] && level(var(q)) > 0){
                 varBumpActivity(var(q));
                 seen[var(q)] = 1;
@@ -442,12 +445,12 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
 
     if (symmetry != nullptr) {
         bool isDecision = (from == CRef_Undef && decisionLevel() != 0);
-        bool isReasonSymmetric;
+        bool isReasonSymmetric = false;
         if (decisionLevel() != 0)
             isReasonSymmetric = (from != CRef_Undef && ca[from].symmetry());
         else
-            isReasonSymmetric =
-                symmetry_units.find(var(p)) == symmetry_units.end();
+            isReasonSymmetric = symmetry_units.find(var(p)) != symmetry_units.end();
+
         symmetry->updateNotify(p, decisionLevel(), getCRefIntoVector(from),
                                isReasonSymmetric, isDecision);
     }
@@ -469,6 +472,8 @@ CRef Solver::propagate()
 {
     CRef    confl     = CRef_Undef;
     int     num_props = 0;
+    bool isSymmetryLevelZero;
+
     watches.cleanAll();
 
     while (qhead < trail.size()){
@@ -476,6 +481,8 @@ CRef Solver::propagate()
         vec<Watcher>&  ws  = watches[p];
         Watcher        *i, *j, *end;
         num_props++;
+
+        isSymmetryLevelZero = (decisionLevel() == 0 && symmetry_units.find(var(p)) != symmetry_units.end());
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -513,9 +520,11 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-            }else
+            }else {
+                if (decisionLevel() == 0 && isSymmetryLevelZero)
+                    symmetry_units.insert(var(first));
                 uncheckedEnqueue(first, cr);
-
+            }
         NextClause:;
         }
         ws.shrink(i - j);
@@ -660,9 +669,9 @@ lbool Solver::search(int nof_conflicts)
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
-                uncheckedEnqueue(learnt_clause[0]);
                 if (symmetry)
                     symmetry_units.insert(var(learnt_clause[0]));
+                uncheckedEnqueue(learnt_clause[0]);
             }else{
                 CRef cr = ca.alloc(learnt_clause, true, symmetry);
                 learnts.push(cr);
@@ -798,6 +807,7 @@ lbool Solver::solve_()
             std::vector<Lit> literals = symmetry->clauseToInject(type);
             assert(literals.size() == 1);
             Lit l = literals[0];
+            symmetry_units.insert(var(l));
 	    uncheckedEnqueue(l);
 	}
     }
@@ -1028,6 +1038,9 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
 
             if (value(sbp[0]) == l_False)
                 return cr;
+
+            if (decisionLevel() == 0 && symmetry)
+                symmetry_units.insert(var(sbp[0]));
 
             if (value(sbp[0]) == l_Undef)
                 uncheckedEnqueue(sbp[0], cr);

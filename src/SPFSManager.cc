@@ -40,11 +40,8 @@ void SPFSManager::updateCancel(const Literal& literal) {
     }
 }
 
-void SPFSManager::generateClauses(const std::vector<bool>& inactives,
-                                  ClauseInjector *injector) {
+void SPFSManager::generateClauses(ClauseInjector *injector) {
     for (unsigned int i=0; i < _statuses.size(); i++) {
-        if (inactives.size() > 0 && inactives[i])
-            continue;
         const std::unique_ptr<SPFSStatus>& status = _statuses[i];
         if (status->isWeaklyActive()) {
             LiteralIndex index = status->getFirstAsymetricLiteral();

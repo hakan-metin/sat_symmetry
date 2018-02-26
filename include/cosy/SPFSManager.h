@@ -27,8 +27,7 @@ class SPFSManager {
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
 
-    void generateClauses(const std::vector<bool>& inactives,
-                         ClauseInjector *injector);
+    void generateClauses(ClauseInjector *injector);
 
     void printStats() const { Printer::print(""); _stats.print(); }
 
