@@ -464,8 +464,9 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
+        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+        if (confl != CRef_Undef)
+            return confl;
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -948,7 +949,7 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
         if (symmetry->hasClauseToInject(type, p)) {
             std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
@@ -961,6 +962,8 @@ void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
             attachClause(cr);
+            return cr;
         }
     }
+    return CRef_Undef;
 }

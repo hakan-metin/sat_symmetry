@@ -17,7 +17,7 @@ TIMEOUT="$1";      shift
 SOLVER="$1";       shift
 OPTIONS="$@"
 
-PARALLEL_TASK=8
+PARALLEL_TASK=4
 
 check_exist_or_die "$PROBLEMS_DIR"
 check_exist_or_die "$SOLVER"

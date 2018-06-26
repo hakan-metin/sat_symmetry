@@ -31,6 +31,9 @@ void CosyManager::defineOrder(std::unique_ptr<Order>&& order) {
         for (const unsigned int& index : _group.watch(variable))
             _statuses[index]->addLookupLiteral(literal);
     }
+
+    // for (auto &status : _statuses)
+    //     status->debugString();
 }
 
 void CosyManager::generateUnits(ClauseInjector *injector) {
@@ -40,10 +43,10 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    IF_STATS_ENABLED({
+    IF_STATS_ENABLED(
             ScopedTimeDistributionUpdater time(&_stats.total_time);
             time.alsoUpdate(&_stats.notify_time);
-        });
+        );
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
@@ -61,10 +64,10 @@ void CosyManager::updateNotify(const Literal& literal,
 }
 
 void CosyManager::updateCancel(const Literal& literal) {
-    IF_STATS_ENABLED({
+    IF_STATS_ENABLED(
             ScopedTimeDistributionUpdater time(&_stats.total_time);
             time.alsoUpdate(&_stats.cancel_time);
-        });
+                     );
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {

@@ -11,6 +11,7 @@ CosyStatus::CosyStatus(const Permutation &permutation, const Order &order,
     _assignment(assignment),
     _lookup_index(0),
     _state(ACTIVE) {
+    _keep.resize(permutation.numberOfCycles());
 }
 
 CosyStatus::~CosyStatus() {
@@ -18,6 +19,26 @@ CosyStatus::~CosyStatus() {
 
 void CosyStatus::addLookupLiteral(const Literal& literal) {
     _lookup_order.push_back(literal);
+
+    Literal l = literal;
+    if (_order.valueMode() == FALSE_LESS_TRUE)
+        l = l.negated();
+
+    unsigned int cycle = _permutation.literalInCycle(l);
+    if (!_keep[cycle].empty())
+        return;
+
+    // Add minimal
+    _keep[cycle].insert(l);
+
+    // Add complement to the negative one
+    Literal negated = l.negated();
+    Literal image = _permutation.imageOf(negated);
+    unsigned neg_cycle = _permutation.literalInCycle(negated);
+    while (image != negated) {
+        _keep[neg_cycle].insert(image);
+        image = _permutation.imageOf(image);
+    }
 }
 
 void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
@@ -108,13 +129,15 @@ void
 CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::vector<Literal> literals;
     std::unordered_set<Literal> used;
+    unsigned int cycle;
     Literal element, inverse, l;
 
     DCHECK(!isLookupEnd());
     DCHECK_EQ(_state, REDUCER);
 
     l = _assignment.getFalseLiteralForAssignedVariable(reason);
-    if (used.insert(l).second)
+    cycle = _permutation.literalInCycle(l);
+    if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
         literals.push_back(l);
 
     for (unsigned int i = 0; i <= _lookup_index; i++) {
@@ -124,16 +147,26 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
         DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
 
         l = _assignment.getFalseLiteralForAssignedVariable(element.variable());
-        if (used.insert(l).second)
+        cycle = _permutation.literalInCycle(l);
+        if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
             literals.push_back(l);
 
         l = _assignment.getFalseLiteralForAssignedVariable(inverse.variable());
-        if (used.insert(l).second)
+        cycle = _permutation.literalInCycle(l);
+        if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
             literals.push_back(l);
     }
 
     DCHECK_GE(literals.size(), 2);
     std::swap(literals[0], literals[1]);
+
+
+    std::cout << "REASON " << reason+1 << std::endl;
+    for (Literal l : literals)
+        std::cout << l.signedValue() << " ";
+    std::cout << std::endl;
+    debugString();
+
 
     injector->addClause(ClauseInjector::Type::ESBP, reason,
                         std::move(literals));
@@ -188,6 +221,7 @@ std::string CosyStatus::debugString() const {
     Literal element, inverse;
     std::string str;
 
+
     if (isLookupEnd())
         return std::string("empty order");
 
@@ -202,6 +236,20 @@ std::string CosyStatus::debugString() const {
         else
             str += std::to_string(literal.signedValue()) + " ";
     }
+
+    _permutation.debugPrint();
+    int c = 0;
+
+    for (auto lits : _keep) {
+        std::cout << c << ":";
+        for (auto lit : lits) {
+            std::cout << lit.signedValue() << " ";
+        }
+        c++;
+        std::cout << std::endl;
+    }
+        std::cout << std::endl;
+
     return str;
 }
 

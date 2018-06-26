@@ -173,6 +173,7 @@ SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
     cosy::Literal literal_c =  _literal_adapter->convertTo(literal_s);
     std::vector<cosy::Literal> literals_c =
         std::move(_injector.getClause(type, literal_c.variable()));
+
     std::vector<T> literals_s = adaptVector(literals_c);
     return literals_s;
 }

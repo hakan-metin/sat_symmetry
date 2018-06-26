@@ -35,6 +35,8 @@ class Permutation {
     bool isTrivialImage(const Literal& element) const;
     bool isTrivialInverse(const Literal& element) const;
 
+    unsigned int literalInCycle(Literal l) const;
+
     void debugPrint() const;
 
  private:
@@ -44,6 +46,7 @@ class Permutation {
 
     std::unordered_map<Literal, Literal> _image;
     std::unordered_map<Literal, Literal> _inverse;
+    std::unordered_map<Literal, unsigned int> _literal_cycle;
 
     DISALLOW_COPY_AND_ASSIGN(Permutation);
 };

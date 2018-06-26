@@ -52,6 +52,8 @@ class CosyStatus {
     unsigned int _lookup_index;
     std::vector<Literal> _lookup_order;
 
+    std::vector<std::unordered_set<Literal>> _keep;
+
     struct LookupInfo {
         LookupInfo(BooleanVariable v, unsigned int bi) :
             variable(v), back_index(bi) {}
