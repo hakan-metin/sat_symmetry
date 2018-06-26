@@ -32,7 +32,7 @@ class CosyStatus {
 
     void addLookupLiteral(const Literal& literal);
 
-    void updateNotify(const Literal& literal);
+    bool updateNotify(const Literal& literal, ClauseInjector *injector);
     void updateCancel(const Literal& literal);
 
     CosyState state() const { return _state; }
@@ -41,6 +41,10 @@ class CosyStatus {
     void generateESBP(BooleanVariable reason, ClauseInjector *injector);
     void generateForceLexLeaderESBP(BooleanVariable reason,
                                     ClauseInjector *injector);
+
+    void generateForceLexLeaderESBPAtIndex(unsigned int index,
+                                           BooleanVariable reason,
+                                           ClauseInjector *injector);
 
     std::string debugString() const;
 
@@ -64,7 +68,10 @@ class CosyStatus {
     CosyState _state;
 
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }
+    bool lookAhead(const Literal& literal, ClauseInjector *injector);
+    CosyState stateInIndex(unsigned int index);
     void updateState();
+    bool isInESBP(Literal l) const;
 
     DISALLOW_COPY_AND_ASSIGN(CosyStatus);
 };

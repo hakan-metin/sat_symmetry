@@ -65,6 +65,20 @@ double DistributionStat::stdDeviation() const {
     return sqrt(_sum_squares_from_average / _num);
 }
 
+void IntegerDistribution::add(int64 value) {
+    addToDistribution(static_cast<double>(value));
+}
+
+std::string IntegerDistribution::valueString() const {
+    std::stringstream stream;
+
+    stream << std::fixed << std::setprecision(2)  << _num <<
+        " [" << min() << ", " << max() << "] "
+           << average() << " " << stdDeviation() << " "  << sum();
+    return stream.str();
+}
+
+
 std::string TimeDistribution::valueString() const {
     std::stringstream stream;
 

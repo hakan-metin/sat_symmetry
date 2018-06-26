@@ -52,14 +52,15 @@ void CosyManager::updateNotify(const Literal& literal,
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
 
-        status->updateNotify(literal);
-
-        if (FLAGS_esbp && status->state() == REDUCER) {
-            status->generateESBP(literal.variable(), injector);
+        if (status->updateNotify(literal, injector))
             break;
-        } else if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
-            status->generateForceLexLeaderESBP(literal.variable(), injector);
-        }
+
+        // if (FLAGS_esbp && status->state() == REDUCER) {
+        //     status->generateESBP(literal.variable(), injector);
+        //     break;
+        // } else if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
+        //     status->generateForceLexLeaderESBP(literal.variable(), injector);
+        // }
     }
 }
 

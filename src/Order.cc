@@ -38,14 +38,16 @@ const Literal Order::leq(const Literal& a, const Literal& b) const {
 
 bool
 Order::isMinimalValue(const Literal& lit, const Assignment& assignment) const {
-    return (_minimal == kTrueLiteralIndex && assignment.literalIsTrue(lit)) ||
-        (_minimal == kFalseLiteralIndex && assignment.literalIsFalse(lit));
+    return assignment.literalIsAssigned(lit) &&
+        ((_minimal == kTrueLiteralIndex && assignment.literalIsTrue(lit)) ||
+        (_minimal == kFalseLiteralIndex && assignment.literalIsFalse(lit)));
 }
 
 bool
 Order::isMaximalValue(const Literal& lit, const Assignment& assignment) const {
-    return (_maximal == kTrueLiteralIndex && assignment.literalIsTrue(lit)) ||
-        (_maximal == kFalseLiteralIndex && assignment.literalIsFalse(lit));
+    return assignment.literalIsAssigned(lit) &&
+        ((_maximal == kTrueLiteralIndex && assignment.literalIsTrue(lit)) ||
+         (_maximal == kFalseLiteralIndex && assignment.literalIsFalse(lit)));
 }
 
 std::string Order::preview() const {

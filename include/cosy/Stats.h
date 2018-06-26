@@ -81,6 +81,18 @@ class DistributionStat : public Stat {
     int64 _num;
 };
 
+/*---------------------------------------------------------------------------*/
+// Statistic on the distribution of a sequence of integers.
+class IntegerDistribution : public DistributionStat {
+ public:
+    explicit IntegerDistribution(const std::string& name)
+        : DistributionStat(name) {}
+    IntegerDistribution(const std::string& name, StatsGroup* group)
+        : DistributionStat(name, group) {}
+    std::string valueString() const override;
+  void add(int64 value);
+};
+
 /*----------------------------------------------------------------------------*/
 class TimeDistribution : public DistributionStat {
  public:
@@ -149,8 +161,6 @@ class CounterStat : public Stat {
     int64 _value;
 };
 
-
-#define COSY_STATS
 
 #ifdef COSY_STATS
 using  ScopedTimeDistributionUpdater = EnableScopedTimeDistributionUpdater;

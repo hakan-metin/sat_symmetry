@@ -60,7 +60,40 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
                         std::move(literals));
 }
 
-void CosyStatus::updateNotify(const Literal& literal) {
+bool CosyStatus::lookAhead(const Literal& literal, ClauseInjector *injector) {
+    Literal element, inverse;
+    unsigned int i;
+    CosyState state;
+
+    for (i = _lookup_index; i < _lookup_order.size(); i++) {
+        element = _lookup_order[i];
+        inverse = _permutation.inverseOf(element);
+
+        const Literal minimal = _order.leq(element, inverse);
+        const Literal maximal = minimal == element ? inverse : element;
+        DCHECK_NE(minimal, maximal);
+
+        if (!_assignment.literalIsAssigned(maximal) &&
+        _order.isMaximalValue(minimal, _assignment))
+            continue;
+
+        if (!_assignment.literalIsAssigned(maximal) &&
+        _order.isMaximalValue(minimal, _assignment))
+            continue;
+
+        break;
+    }
+
+    state = stateInIndex(i);
+    if (state == REDUCER) {
+        _state = REDUCER;
+        generateForceLexLeaderESBPAtIndex(i, literal.variable(), injector);
+        return true;
+    }
+    return false;
+}
+
+bool CosyStatus::updateNotify(const Literal& literal, ClauseInjector *injector) {
     unsigned int initial = _lookup_index;
     Literal element, inverse;
     const BooleanVariable variable = literal.variable();
@@ -75,7 +108,16 @@ void CosyStatus::updateNotify(const Literal& literal) {
         if (_lookup_index == initial)
             _lookup_infos.push_back(LookupInfo(variable, _lookup_index));
     }
+    if (lookAhead(literal, injector))
+        return true;
+
     updateState();
+    if (_state == REDUCER) {
+        generateForceLexLeaderESBP(literal.variable(), injector);
+        return true;
+    }
+
+    return false;
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
@@ -90,87 +132,90 @@ void CosyStatus::updateCancel(const Literal& literal) {
     _lookup_infos.pop_back();
 }
 
-void CosyStatus::updateState() {
-    Literal element, inverse;
+CosyState CosyStatus::stateInIndex(unsigned int index) {
+    if (index >= _lookup_order.size())
+        return ACTIVE;
 
-    if (isLookupEnd()) {
-        _state = ACTIVE;  // Special case not really active
-        return;
-    }
-
-    element = _lookup_order[_lookup_index];
-    inverse = _permutation.inverseOf(element);
+    const Literal element = _lookup_order[_lookup_index];
+    const Literal inverse = _permutation.inverseOf(element);
 
     const Literal minimal = _order.leq(element, inverse);
     const Literal maximal = minimal == element ? inverse : element;
 
-
     if (_assignment.bothLiteralsAreAssigned(element, inverse)) {
         DCHECK(!_assignment.hasSameAssignmentValue(element, inverse));
         if (_order.isMinimalValue(minimal, _assignment))
-            _state = INACTIVE;
+            return INACTIVE;
         else
-            _state = REDUCER;
+            return REDUCER;
     } else {
         // force lex leader case
         // F < T : U <- F or T -> U
         // T < F : U <- T or F -> U
         if ((!_assignment.literalIsAssigned(minimal) &&
-            _order.isMinimalValue(maximal, _assignment)) ||
+             _order.isMinimalValue(maximal, _assignment)) ||
             (!_assignment.literalIsAssigned(maximal) &&
              _order.isMaximalValue(minimal, _assignment)))
-            _state = FORCE_LEX_LEADER;
-        else
-            _state = ACTIVE;
+            return FORCE_LEX_LEADER;
     }
+
+    return ACTIVE;
 }
 
-void
-CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
+
+void CosyStatus::updateState() {
+    _state = stateInIndex(_lookup_index);
+}
+
+void CosyStatus::generateForceLexLeaderESBPAtIndex(unsigned int index,
+                                                   BooleanVariable reason,
+                                                   ClauseInjector *injector) {
     std::vector<Literal> literals;
     std::unordered_set<Literal> used;
-    unsigned int cycle;
     Literal element, inverse, l;
+    BooleanVariable var;
 
-    DCHECK(!isLookupEnd());
+    if (index >= _lookup_order.size())
+        return;
+
     DCHECK_EQ(_state, REDUCER);
 
     l = _assignment.getFalseLiteralForAssignedVariable(reason);
-    cycle = _permutation.literalInCycle(l);
-    if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
+    if (used.insert(l).second && isInESBP(l))
         literals.push_back(l);
 
-    for (unsigned int i = 0; i <= _lookup_index; i++) {
+    for (unsigned int i = 0; i <= index; i++) {
         element = _lookup_order[i];
         inverse = _permutation.inverseOf(element);
 
-        DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
+        // DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
+        if (_assignment.literalIsAssigned(element)) {
+            var = element.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second && isInESBP(l))
+                literals.push_back(l);
+        }
 
-        l = _assignment.getFalseLiteralForAssignedVariable(element.variable());
-        cycle = _permutation.literalInCycle(l);
-        if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
-            literals.push_back(l);
-
-        l = _assignment.getFalseLiteralForAssignedVariable(inverse.variable());
-        cycle = _permutation.literalInCycle(l);
-        if (used.insert(l).second && _keep[cycle].find(l) != _keep[cycle].end())
-            literals.push_back(l);
+        if (_assignment.literalIsAssigned(inverse)) {
+            var = inverse.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second && isInESBP(l))
+                literals.push_back(l);
+        }
     }
 
     DCHECK_GE(literals.size(), 2);
     std::swap(literals[0], literals[1]);
 
-
-    std::cout << "REASON " << reason+1 << std::endl;
-    for (Literal l : literals)
-        std::cout << l.signedValue() << " ";
-    std::cout << std::endl;
-    debugString();
-
-
     injector->addClause(ClauseInjector::Type::ESBP, reason,
                         std::move(literals));
 }
+
+void
+CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
+    generateForceLexLeaderESBPAtIndex(_lookup_index, reason, injector);
+}
+
 
 void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
                                             ClauseInjector *injector) {
@@ -237,20 +282,26 @@ std::string CosyStatus::debugString() const {
             str += std::to_string(literal.signedValue()) + " ";
     }
 
-    _permutation.debugPrint();
-    int c = 0;
+    // _permutation.debugPrint();
+    // int c = 0;
 
-    for (auto lits : _keep) {
-        std::cout << c << ":";
-        for (auto lit : lits) {
-            std::cout << lit.signedValue() << " ";
-        }
-        c++;
-        std::cout << std::endl;
-    }
-        std::cout << std::endl;
+    // for (auto lits : _keep) {
+    //     std::cout << c << ":";
+    //     for (auto lit : lits) {
+    //         std::cout << lit.signedValue() << " ";
+    //     }
+    //     c++;
+    //     std::cout << std::endl;
+    // }
+    //     std::cout << std::endl;
 
     return str;
+}
+
+
+ bool CosyStatus::isInESBP(Literal l) const {
+    unsigned int cycle = _permutation.literalInCycle(l);
+    return _keep[cycle].find(l) != _keep[cycle].end();
 }
 
 
