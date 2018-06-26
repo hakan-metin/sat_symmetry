@@ -52,7 +52,8 @@ Solver::Solver() :
 
     // Parameters (user settable):
     //
-    verbosity        (0)
+    isNewESBP        (false)
+  , verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)
   , random_var_freq  (opt_random_var_freq)
@@ -150,7 +151,7 @@ bool Solver::addClause_(vec<Lit>& ps)
         uncheckedEnqueue(ps[0]);
         return ok = (propagate() == CRef_Undef);
     }else{
-        CRef cr = ca.alloc(ps, false);
+        CRef cr = ca.alloc(ps, false, false);
         clauses.push(cr);
         attachClause(cr);
     }
@@ -464,9 +465,7 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        if (confl != CRef_Undef)
-            return confl;
+        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -626,7 +625,7 @@ bool Solver::simplify()
 lbool Solver::search(int nof_conflicts)
 {
     assert(ok);
-    int         backtrack_level;
+    int         backtrack_level, current_level;
     int         conflictC = 0;
     vec<Lit>    learnt_clause;
     starts++;
@@ -638,14 +637,19 @@ lbool Solver::search(int nof_conflicts)
             conflicts++; conflictC++;
             if (decisionLevel() == 0) return l_False;
 
+            current_level = decisionLevel();
+
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level);
             cancelUntil(backtrack_level);
 
+            if (ca[confl].esbp())
+                _stats.szBackLevel.add(current_level - backtrack_level);
+
             if (learnt_clause.size() == 1){
                 uncheckedEnqueue(learnt_clause[0]);
             }else{
-                CRef cr = ca.alloc(learnt_clause, true);
+                CRef cr = ca.alloc(learnt_clause, true, false);
                 learnts.push(cr);
                 attachClause(cr);
                 claBumpActivity(ca[cr]);
@@ -959,9 +963,12 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             for (Lit l : vsbp) {
                 sbp.push(l);
             }
-            CRef cr = ca.alloc(sbp, true);
+            CRef cr = ca.alloc(sbp, true, true);
             learnts.push(cr);
             attachClause(cr);
+
+            _stats.sizeESBP.add(sbp.size());
+            _stats.decisionLevelESBP.add(decisionLevel());
             return cr;
         }
     }

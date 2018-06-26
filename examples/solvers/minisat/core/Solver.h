@@ -30,6 +30,10 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "core/SolverTypes.h"
 
 #include "cosy/SymmetryController.h"
+#include "cosy/Stats.h"
+
+using cosy::StatsGroup;
+using cosy::IntegerDistribution;
 
 
 namespace Minisat {
@@ -75,6 +79,20 @@ public:
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+
+    bool isNewESBP;
+    struct Stats : public StatsGroup {
+    Stats() : StatsGroup("Solver"),
+            decisionLevelESBP("Decision Level ESBP", this),
+            sizeESBP("Size ESBP", this),
+            szBackLevel("Size backtrack Level on ESBP", this)
+        {}
+        IntegerDistribution decisionLevelESBP;
+        IntegerDistribution sizeESBP;
+        IntegerDistribution szBackLevel;
+    };
+    Stats _stats;
+
 
     // Convenience versions of 'toDimacs()':
     void    toDimacs     (const char* file);

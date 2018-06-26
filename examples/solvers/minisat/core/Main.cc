@@ -50,8 +50,10 @@ void printStats(Solver& solver)
     printf("conflict literals     : %-12" PRIu64"   (%4.2f %% deleted)\n", solver.tot_literals, (solver.max_literals - solver.tot_literals)*100 / (double)solver.max_literals);
     if (mem_used != 0) printf("Memory used           : %.2f MB\n", mem_used);
     printf("CPU time              : %g s\n", cpu_time);
-    if (solver.symmetry != nullptr)
+    if (solver.symmetry != nullptr) {
         solver.symmetry->printStats();
+        solver._stats.print();
+    }
 }
 
 
