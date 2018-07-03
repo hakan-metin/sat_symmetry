@@ -77,8 +77,8 @@ bool CosyStatus::lookAhead(const Literal& literal, ClauseInjector *injector) {
         _order.isMaximalValue(minimal, _assignment))
             continue;
 
-        if (!_assignment.literalIsAssigned(maximal) &&
-        _order.isMaximalValue(minimal, _assignment))
+        if (!_assignment.literalIsAssigned(minimal) &&
+            _order.isMinimalValue(maximal, _assignment))
             continue;
 
         break;
