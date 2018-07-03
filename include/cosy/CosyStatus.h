@@ -42,7 +42,7 @@ class CosyStatus {
     void generateForceLexLeaderESBP(BooleanVariable reason,
                                     ClauseInjector *injector);
 
-    void generateForceLexLeaderESBPAtIndex(unsigned int index,
+    void generateESBPAtIndex(unsigned int index,
                                            BooleanVariable reason,
                                            ClauseInjector *injector);
 

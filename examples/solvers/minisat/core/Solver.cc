@@ -465,7 +465,9 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+        if (confl != CRef_Undef)
+            return confl;
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -503,8 +505,14 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-            }else
+            }else {
                 uncheckedEnqueue(first, cr);
+                if (symmetry != nullptr && symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
+                    while (i < end)
+                        *j++ = *i++;
+                    qhead = trail.size() - 1;
+                }
+            }
 
         NextClause:;
         }
