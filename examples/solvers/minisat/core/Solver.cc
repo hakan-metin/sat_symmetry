@@ -507,7 +507,8 @@ CRef Solver::propagate()
                     *j++ = *i++;
             }else {
                 uncheckedEnqueue(first, cr);
-                if (symmetry != nullptr && symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
+                if (symmetry != nullptr &&
+                    symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
                     while (i < end)
                         *j++ = *i++;
                     qhead = trail.size() - 1;
@@ -784,6 +785,8 @@ lbool Solver::solve_()
                              cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
+        notifyCNFUnits();
+
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
 	while (symmetry->hasClauseToInject(type)) {
 
@@ -981,4 +984,13 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
         }
     }
     return CRef_Undef;
+}
+void Solver::notifyCNFUnits() {
+    assert(decisionLevel() == 0);
+
+    if (symmetry == nullptr)
+        return;
+
+    for (int i=0; i<trail.size(); i++)
+        symmetry->updateNotify(trail[i], 0, false);
 }

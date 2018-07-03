@@ -79,6 +79,7 @@ public:
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    void notifyCNFUnits();
 
     bool isNewESBP;
     struct Stats : public StatsGroup {
