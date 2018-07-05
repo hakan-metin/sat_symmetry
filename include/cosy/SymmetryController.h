@@ -155,7 +155,7 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _injector.removeClause(literal_c.variable());
+    // _injector.removeClause(literal_c.variable());
 }
 
 template<class T> inline bool

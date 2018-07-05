@@ -436,9 +436,6 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
 
-    if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
-    }
 }
 
 
@@ -468,12 +465,15 @@ CRef Solver::propagate()
         if (verbosity > 1)
             std::cout << "prop " << var(p) << std::endl;
 
-        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-                                              if (confl != CRef_Undef) {
-                                                  // std::cout << "SYM confl" << std::endl;
-                                                                              return confl;
-                                              }
+        if (symmetry != nullptr) {
+            symmetry->updateNotify(p, decisionLevel(), false);
 
+            confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+            if (confl != CRef_Undef) {
+                // std::cout << "SYM confl" << std::endl;
+                return confl;
+            }
+        }
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
             Lit blocker = i->blocker;
@@ -639,7 +639,8 @@ bool Solver::simplify()
 lbool Solver::search(int nof_conflicts)
 {
     assert(ok);
-    int         backtrack_level, current_level;
+    int         backtrack_level// , current_level
+        ;
     int         conflictC = 0;
     vec<Lit>    learnt_clause;
     starts++;
@@ -651,14 +652,14 @@ lbool Solver::search(int nof_conflicts)
             conflicts++; conflictC++;
             if (decisionLevel() == 0) return l_False;
 
-            current_level = decisionLevel();
+            // current_level = decisionLevel();
 
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level);
             cancelUntil(backtrack_level);
 
-            if (ca[confl].esbp())
-                _stats.szBackLevel.add(current_level - backtrack_level);
+            // if (ca[confl].esbp())
+            //     _stats.szBackLevel.add(current_level - backtrack_level);
 
             if (learnt_clause.size() == 1){
                 uncheckedEnqueue(learnt_clause[0]);
@@ -978,16 +979,16 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             vec<Lit> sbp;
             for (Lit l : vsbp) {
                 sbp.push(l);
-                // std::cout << var(l) << " ";
+                // std::cout << (sign(l)?"-":"") << var(l)+1 << " ";
             }
-            // std::cout <<  "===========================" << std::endl;
+            // std::cout << "0" << std::endl;
 
             CRef cr = ca.alloc(sbp, true, true);
             learnts.push(cr);
             attachClause(cr);
 
-            _stats.sizeESBP.add(sbp.size());
-            _stats.decisionLevelESBP.add(decisionLevel());
+            // _stats.sizeESBP.add(sbp.size());
+            // _stats.decisionLevelESBP.add(decisionLevel());
             return cr;
         }
     }

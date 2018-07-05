@@ -52,7 +52,7 @@ void printStats(Solver& solver)
     printf("CPU time              : %g s\n", cpu_time);
     if (solver.symmetry != nullptr) {
         solver.symmetry->printStats();
-        solver._stats.print();
+        // solver._stats.print();
     }
 }
 
