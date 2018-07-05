@@ -10,7 +10,8 @@ static const bool FLAGS_esbp_forcing = false;
 CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
     _group(group),
     _assignment(assignment),
-    _order(nullptr) {
+    _order(nullptr),
+    _stop(false) {
 }
 
 CosyManager::~CosyManager() {
@@ -48,12 +49,18 @@ void CosyManager::updateNotify(const Literal& literal,
             time.alsoUpdate(&_stats.notify_time);
         );
 
+    if (_stop)
+        return;
+
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
 
-        if (status->updateNotify(literal, injector))
+        if (status->updateNotify(literal, injector)) {
+            // std::cout << "BREAK " << std::endl;
+            _stop = true;
             break;
+        }
 
         // if (FLAGS_esbp && status->state() == REDUCER) {
         //     status->generateESBP(literal.variable(), injector);
@@ -69,6 +76,8 @@ void CosyManager::updateCancel(const Literal& literal) {
             ScopedTimeDistributionUpdater time(&_stats.total_time);
             time.alsoUpdate(&_stats.cancel_time);
                      );
+
+    _stop = false;
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {

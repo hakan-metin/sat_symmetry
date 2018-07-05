@@ -465,9 +465,14 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
+        if (verbosity > 1)
+            std::cout << "prop " << var(p) << std::endl;
+
         confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        if (confl != CRef_Undef)
-            return confl;
+                                              if (confl != CRef_Undef) {
+                                                  // std::cout << "SYM confl" << std::endl;
+                                                                              return confl;
+                                              }
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -507,12 +512,12 @@ CRef Solver::propagate()
                     *j++ = *i++;
             }else {
                 uncheckedEnqueue(first, cr);
-                if (symmetry != nullptr &&
-                    symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
-                    while (i < end)
-                        *j++ = *i++;
-                    qhead = trail.size() - 1;
-                }
+                // if (symmetry != nullptr &&
+                //     symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
+                //     while (i < end)
+                //         *j++ = *i++;
+                //     qhead = trail.size() - 1;
+                // }
             }
 
         NextClause:;
@@ -785,7 +790,7 @@ lbool Solver::solve_()
                              cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
-        notifyCNFUnits();
+        // notifyCNFUnits();
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
 	while (symmetry->hasClauseToInject(type)) {
@@ -973,7 +978,10 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             vec<Lit> sbp;
             for (Lit l : vsbp) {
                 sbp.push(l);
+                // std::cout << var(l) << " ";
             }
+            // std::cout <<  "===========================" << std::endl;
+
             CRef cr = ca.alloc(sbp, true, true);
             learnts.push(cr);
             attachClause(cr);

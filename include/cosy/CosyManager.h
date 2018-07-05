@@ -32,6 +32,7 @@ class CosyManager {
     const Group& _group;
     const Assignment& _assignment;
     std::unique_ptr<Order> _order;
+    bool _stop;
 
     std::vector< std::unique_ptr<CosyStatus> > _statuses;
 
