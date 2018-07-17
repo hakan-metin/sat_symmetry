@@ -28,11 +28,14 @@ class Group {
     int64 numberOfPermutations() const { return _permutations.size(); }
     int64 numberOfSymmetricVariables() const { return _symmetric.size(); }
     int64 numberOfInverting() const { return _inverting.size(); }
+    bool isOnlyInvolution() const { return _is_only_involution; }
+
 
     void debugPrint() const;
     void summarize(unsigned int num_vars) const;
 
  private:
+    bool _is_only_involution;
     std::vector< std::unique_ptr<Permutation> > _permutations;
     std::unordered_set<BooleanVariable> _symmetric;
     std::unordered_set<BooleanVariable> _inverting;

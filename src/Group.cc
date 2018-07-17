@@ -5,7 +5,7 @@
 
 namespace cosy {
 
-Group::Group() {
+Group::Group() : _is_only_involution(true) {
 }
 
 Group::~Group() {
@@ -23,9 +23,11 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
     if (isPermutationSpurious(permutation))
         return;
 
-
     if (permutation->size() > _watchers.size())
         _watchers.resize(permutation->size());
+
+    if (!permutation->isInvolution())
+        _is_only_involution = false;
 
     for (unsigned int c = 0; c < num_cycles; ++c) {
         Literal element = permutation->lastElementInCycle(c);
@@ -85,7 +87,6 @@ void Group::debugPrint() const {
 }
 
 }  // namespace cosy
-
 
 /*
  * Local Variables:

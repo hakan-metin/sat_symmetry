@@ -14,7 +14,8 @@ namespace cosy {
 
 class Permutation {
  public:
-    explicit Permutation(unsigned int size) : _size(size) {}
+    explicit Permutation(unsigned int size) : _size(size), _is_involution(true)
+    {}
     ~Permutation() {}
 
     void addToCurrentCycle(Literal x);
@@ -35,10 +36,12 @@ class Permutation {
     bool isTrivialImage(const Literal& element) const;
     bool isTrivialInverse(const Literal& element) const;
 
+    bool isInvolution() const { return _is_involution; }
     void debugPrint() const;
 
  private:
     const int _size;
+    bool _is_involution;
     std::vector<Literal> _cycles;
     std::vector<int> _cycles_lim;
 

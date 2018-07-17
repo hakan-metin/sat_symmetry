@@ -28,6 +28,9 @@ void Permutation::closeCurrentCycle() {
     DCHECK_GE(sz - last, 2);
     _cycles_lim.push_back(sz);
 
+    if (sz - last > 2)
+        _is_involution = false;
+
     // Add image and inverse to access in lookup unordered_map
     const int num_cycle = _cycles_lim.size() - 1;
     const Literal e = lastElementInCycle(num_cycle);

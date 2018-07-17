@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include <memory>
 
 #include "cosy/DisjointSets.h"
 #include "cosy/Literal.h"
@@ -19,6 +20,7 @@ class Orbits {
     ~Orbits() {}
 
     void assign(const std::vector<Permutation*> permutations);
+    void assign(const std::vector<std::unique_ptr<Permutation>>& permutations);
 
     const std::vector< std::vector<BooleanVariable> >::const_iterator begin() {
         return _orbits.begin();
