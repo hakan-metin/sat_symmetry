@@ -462,6 +462,7 @@ CRef Solver::propagate()
         Lit            p   = trail[qhead++];     // 'p' is enqueued fact to propagate.
         vec<Watcher>&  ws  = watches[p];
         Watcher        *i, *j, *end;
+
         num_props++;
 
         learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
@@ -469,6 +470,7 @@ CRef Solver::propagate()
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
+
             Lit blocker = i->blocker;
             if (value(blocker) == l_True){
                 *j++ = *i++; continue; }
@@ -607,7 +609,6 @@ bool Solver::simplify()
 
     return true;
 }
-
 
 /*_________________________________________________________________________________________________
 |
@@ -777,7 +778,8 @@ lbool Solver::solve_()
             std::vector<Lit> literals = symmetry->clauseToInject(type);
             assert(literals.size() == 1);
             Lit l = literals[0];
-	    uncheckedEnqueue(l);
+            if (value(l) != l_Undef)
+                uncheckedEnqueue(l);
 	}
     }
     solves++;
