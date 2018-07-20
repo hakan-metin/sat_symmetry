@@ -1,6 +1,7 @@
 // Copyright 2017 Hakan Metin - LIP6
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "cosy/CosyStatus.h"
 

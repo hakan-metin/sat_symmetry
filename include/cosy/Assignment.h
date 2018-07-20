@@ -29,6 +29,7 @@ class Assignment {
 
     bool hasSameAssignmentValue(Literal x, Literal y) const;
     bool bothLiteralsAreAssigned(Literal x, Literal y) const;
+    bool bothLiteralsAreNotAssigned(Literal x, Literal y) const;
 
     Literal getTrueLiteralForAssignedVariable(BooleanVariable var) const;
     Literal getFalseLiteralForAssignedVariable(BooleanVariable var) const;
@@ -79,6 +80,10 @@ inline bool Assignment::hasSameAssignmentValue(Literal x, Literal y) const {
 
 inline bool Assignment::bothLiteralsAreAssigned(Literal x, Literal y) const {
      return literalIsAssigned(x) && literalIsAssigned(y);
+}
+
+inline bool Assignment::bothLiteralsAreNotAssigned(Literal x, Literal y) const {
+     return !literalIsAssigned(x) && !literalIsAssigned(y);
 }
 
 
