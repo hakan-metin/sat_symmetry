@@ -74,7 +74,8 @@ public:
 
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
-    void learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    void notifyCNFUnits();
 
     // Convenience versions of 'toDimacs()':
     void    toDimacs     (const char* file);

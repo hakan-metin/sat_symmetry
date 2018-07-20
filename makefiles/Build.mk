@@ -23,7 +23,7 @@ $(LIB)$(lib): $(objects)
 
 CFLAGS += -Iinclude/ -fPIC -Wall -Wextra
 
-default: CFLAGS += -O3 -DNDEBUG
+default: CFLAGS += -O3 -DDEBUG -g
 default: $(LIB)$(lib)
 
 ################################################################################

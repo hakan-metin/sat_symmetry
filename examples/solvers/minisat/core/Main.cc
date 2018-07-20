@@ -92,6 +92,8 @@ int main(int argc, char** argv)
         IntOption    cpu_lim("MAIN", "cpu-lim","Limit on CPU time allowed in seconds.\n", INT32_MAX, IntRange(0, INT32_MAX));
         IntOption    mem_lim("MAIN", "mem-lim","Limit on memory usage in megabytes.\n", INT32_MAX, IntRange(0, INT32_MAX));
 
+        BoolOption    opt_cosy ("SYM", "cosy", "Active cosy", true);
+
         parseOptions(argc, argv, true);
 
         Solver S;
@@ -166,16 +168,19 @@ int main(int argc, char** argv)
             exit(20);
         }
 
-        std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
-            (new MinisatLiteralAdapter());
+        // if (opt_cosy) {
+            std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
+                (new MinisatLiteralAdapter());
 
-        std::string cnf_file = std::string(argv[1]);
+            std::string cnf_file = std::string(argv[1]);
 
-        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
-            (new cosy::SymmetryController<Minisat::Lit>
-             (cnf_file,
-              cosy::SymmetryFinder::Automorphism::BLISS,
-              adapter));
+            S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
+                (new cosy::SymmetryController<Minisat::Lit>
+                 (cnf_file,
+                  cosy::SymmetryFinder::Automorphism::BLISS,
+                  adapter));
+        // }
+
 
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);

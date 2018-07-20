@@ -44,6 +44,10 @@ static DoubleOption  opt_restart_inc       (_cat, "rinc",        "Restart interv
 static DoubleOption  opt_garbage_frac      (_cat, "gc-frac",     "The fraction of wasted memory allowed before a garbage collection is triggered",  0.20, DoubleRange(0, false, HUGE_VAL, false));
 
 
+static BoolOption    opt_learn_sbp         ("SYM", "learn-sbp",    "Add sbp to leanrt base", true);
+static BoolOption    opt_sbp_stop_prop         ("SYM", "sbp_stop_prob",    "Add sbp stop immediately propagate", false);
+
+
 //=================================================================================================
 // Constructor/Destructor:
 
@@ -52,7 +56,8 @@ Solver::Solver() :
 
     // Parameters (user settable):
     //
-    verbosity        (0)
+    symmetry(nullptr)
+  , verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)
   , random_var_freq  (opt_random_var_freq)
@@ -436,7 +441,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     trail.push_(p);
 
     if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
+        symmetry->updateNotify(p);
     }
 }
 
@@ -772,6 +777,8 @@ lbool Solver::solve_()
                              cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
 
+        notifyCNFUnits();
+
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
 	while (symmetry->hasClauseToInject(type)) {
 
@@ -950,7 +957,7 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
         if (symmetry->hasClauseToInject(type, p)) {
             std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
@@ -961,8 +968,20 @@ void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
                 sbp.push(l);
             }
             CRef cr = ca.alloc(sbp, true);
-            learnts.push(cr);
-            attachClause(cr);
+            if (opt_learn_sbp) {
+                learnts.push(cr);
+                attachClause(cr);
+            }
+
+            return cr;
         }
+    }
+    return CRef_Undef;
+}
+
+void Solver::notifyCNFUnits() {
+    if (symmetry != nullptr) {
+        for (int i=0; i<trail.size(); i++)
+            symmetry->updateNotify(trail[i]);
     }
 }

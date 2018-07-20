@@ -2,7 +2,7 @@
 EXAMPLES := examples/
 
 examples: default $(BIN)CNFBlissSymmetries $(BIN)CNFSaucySymmetries
-solvers: default $(BIN)minisat
+solvers: $(BIN)minisat
 
 $(call REQUIRE-DIR, $(BIN)CNFBlissSymmetries)
 $(call REQUIRE-DIR, $(BIN)CNFSaucySymmetries)
@@ -21,7 +21,7 @@ $(BIN)CNFSaucySymmetries: $(EXAMPLES)CNFSaucySymmetries.cc
 # Minisat
 
 FORCE:
-$(BIN)minisat: FORCE
+$(BIN)minisat: default FORCE
 	$(call cmd-make, clean, $(EXAMPLES)solvers/minisat/core)
 	$(call cmd-make, , $(EXAMPLES)solvers/minisat/core)
 	$(call cmd-cp, $@, $(EXAMPLES)solvers/minisat/core/minisat)
