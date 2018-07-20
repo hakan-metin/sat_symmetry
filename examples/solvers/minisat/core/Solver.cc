@@ -45,7 +45,7 @@ static DoubleOption  opt_garbage_frac      (_cat, "gc-frac",     "The fraction o
 
 
 static BoolOption    opt_learn_sbp         ("SYM", "learn-sbp",    "Add sbp to leanrt base", true);
-static BoolOption    opt_sbp_stop_prop         ("SYM", "sbp_stop_prob",    "Add sbp stop immediately propagate", false);
+static BoolOption    opt_sbp_stop_prop     ("SYM", "sbp-stop-prop",    "Add sbp stop immediately propagate", false);
 
 
 //=================================================================================================
@@ -58,6 +58,7 @@ Solver::Solver() :
     //
     symmetry(nullptr)
   , adapter(nullptr)
+  , cr_sbp(CRef_Undef)
   , verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)
@@ -471,7 +472,10 @@ CRef Solver::propagate()
 
         num_props++;
 
-        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+        if (confl != CRef_Undef)
+            return confl;
+
         learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
@@ -511,13 +515,20 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-            }else
+            }else {
                 uncheckedEnqueue(first, cr);
+                if (opt_sbp_stop_prop && symmetry != nullptr &&
+                    symmetry->hasClauseToInject(cosy::ClauseInjector::ESBP, first)) {
+                    while (i < end)
+                        *j++ = *i++;
+                    qhead = trail.size() - 1;
+                }
+
+            }
 
         NextClause:;
         }
         ws.shrink(i - j);
-
 
     }
     propagations += num_props;
@@ -646,7 +657,12 @@ lbool Solver::search(int nof_conflicts)
 
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level);
+            if (cr_sbp != CRef_Undef) {
+                ca.free(cr_sbp);
+                cr_sbp = CRef_Undef;
+            }
             cancelUntil(backtrack_level);
+
 
             if (learnt_clause.size() == 1){
                 uncheckedEnqueue(learnt_clause[0]);
@@ -968,13 +984,13 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             for (Lit l : vsbp) {
                 sbp.push(l);
             }
-            CRef cr = ca.alloc(sbp, true);
+            cr_sbp = ca.alloc(sbp, true);
             if (opt_learn_sbp) {
-                learnts.push(cr);
-                attachClause(cr);
+                learnts.push(cr_sbp);
+                attachClause(cr_sbp);
             }
 
-            return cr;
+            return cr_sbp;
         }
     }
     return CRef_Undef;

@@ -75,7 +75,7 @@ public:
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
     std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter;
-
+    CRef cr_sbp;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
     void notifyCNFUnits();
 
