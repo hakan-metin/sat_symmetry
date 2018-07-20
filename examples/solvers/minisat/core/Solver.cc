@@ -57,6 +57,7 @@ Solver::Solver() :
     // Parameters (user settable):
     //
     symmetry(nullptr)
+  , adapter(nullptr)
   , verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)

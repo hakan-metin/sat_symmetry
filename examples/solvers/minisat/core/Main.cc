@@ -168,8 +168,8 @@ int main(int argc, char** argv)
             exit(20);
         }
 
-        // if (opt_cosy) {
-            std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
+        if (opt_cosy) {
+            S.adapter = std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>>
                 (new MinisatLiteralAdapter());
 
             std::string cnf_file = std::string(argv[1]);
@@ -178,8 +178,8 @@ int main(int argc, char** argv)
                 (new cosy::SymmetryController<Minisat::Lit>
                  (cnf_file,
                   cosy::SymmetryFinder::Automorphism::BLISS,
-                  adapter));
-        // }
+                  S.adapter));
+        }
 
 
         vec<Lit> dummy;
