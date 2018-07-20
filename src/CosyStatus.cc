@@ -11,13 +11,35 @@ CosyStatus::CosyStatus(const Permutation &permutation, const Order &order,
     _assignment(assignment),
     _lookup_index(0),
     _state(ACTIVE) {
+    _keep.resize(permutation.numberOfCycles());
 }
 
 CosyStatus::~CosyStatus() {
 }
 
 void CosyStatus::addLookupLiteral(const Literal& literal) {
+    _positions[literal] = _lookup_order.size();
     _lookup_order.push_back(literal);
+
+    Literal l = literal;
+    if (_order.valueMode() == FALSE_LESS_TRUE)
+        l = l.negated();
+
+    unsigned int cycle = _permutation.literalInCycle(l);
+    if (!_keep[cycle].empty())
+        return;
+
+    // Add minimal
+    _keep[cycle].insert(l);
+
+    // Add complement to the negative one
+    Literal negated = l.negated();
+    Literal image = _permutation.imageOf(negated);
+    unsigned neg_cycle = _permutation.literalInCycle(negated);
+    while (image != negated) {
+        _keep[neg_cycle].insert(image);
+        image = _permutation.imageOf(image);
+    }
 }
 
 void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
@@ -48,7 +70,18 @@ void CosyStatus::updateNotify(const Literal& literal) {
         element = _lookup_order[_lookup_index];
         inverse = _permutation.inverseOf(element);
 
-        if (!_assignment.hasSameAssignmentValue(element, inverse))
+        // Both value to undef => do nothing
+        if (!_assignment.literalIsAssigned(element) &&
+            !_assignment.literalIsAssigned(inverse))
+            return;
+
+        const Literal minimal = _order.leq(element, inverse);
+        const Literal maximal = minimal == element ? inverse : element;
+        DCHECK_NE(minimal, maximal);
+
+        if (!(_assignment.hasSameAssignmentValue(element, inverse) ||
+              _order.isMaximalValue(maximal, _assignment) ||
+              _order.isMinimalValue(minimal, _assignment)))
             break;
 
         if (_lookup_index == initial)

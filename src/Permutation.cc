@@ -9,6 +9,8 @@ void Permutation::addToCurrentCycle(Literal x) {
     const int back = _cycles_lim.empty() ? 0 : _cycles_lim.back();
     _cycles.push_back(x);
 
+    _literal_cycle[x] = numberOfCycles();
+
     // Add image and inverse to access in lookup unordered_map
     if (_cycles.size() > 0 && cs != back) {
         const Literal e = _cycles[cs - 1];
@@ -65,6 +67,9 @@ bool Permutation::isTrivialInverse(const Literal& element) const {
     return _inverse.find(element) == _inverse.end();
 }
 
+unsigned int Permutation::literalInCycle(Literal l) const {
+    return _literal_cycle.at(l);
+}
 
 void Permutation::debugPrint() const {
     CHECK_NE(numberOfCycles(), 0);
