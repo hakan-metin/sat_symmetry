@@ -22,6 +22,7 @@ $(BIN)CNFSaucySymmetries: $(EXAMPLES)CNFSaucySymmetries.cc
 
 FORCE:
 $(BIN)minisat: FORCE
+	$(call cmd-make, clean, $(EXAMPLES)solvers/minisat/core)
 	$(call cmd-make, , $(EXAMPLES)solvers/minisat/core)
 	$(call cmd-cp, $@, $(EXAMPLES)solvers/minisat/core/minisat)
 
