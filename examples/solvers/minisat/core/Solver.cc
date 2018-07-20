@@ -793,6 +793,9 @@ lbool Solver::solve_()
         symmetry->enableCosy(cosy::OrderMode::AUTO,
                              cosy::ValueMode::TRUE_LESS_FALSE);
         symmetry->printInfo();
+        printf("c ============================        Options       ===========================\n");
+        printf("c %-37s %s\n", "learn sbp", (opt_learn_sbp? "true":"false"));
+        printf("c %-37s %s\n", "stop propagate on sbp", (opt_sbp_stop_prop? "true":"false"));
 
         notifyCNFUnits();
 
