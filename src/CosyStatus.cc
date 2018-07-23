@@ -67,20 +67,23 @@ void CosyStatus::updateNotify(const Literal& literal) {
     const BooleanVariable variable = literal.variable();
 
     Literal positif = literal.isPositive() ? literal : literal.negated();
-
     unsigned int index = _positions.at(positif);
+
+    if (_state == INACTIVE)
+        return;
 
     if (index < _lookup_index) {
         element = _lookup_order[index];
         inverse = _permutation.inverseOf(element);
 
         if (!_assignment.hasSameAssignmentValue(element, inverse)) {
-            _lookup_index = 0; // FIXME this can be optimized: (= index)
-            // updateState();
+            _lookup_index = index;
+            updateState();
+            assert(_state == REDUCER);
+            return;
         }
-        // return;
+        return;
     }
-
 
     for (; _lookup_index < _lookup_order.size(); ++_lookup_index) {
         element = _lookup_order[_lookup_index];
@@ -90,7 +93,6 @@ void CosyStatus::updateNotify(const Literal& literal) {
         const Literal maximal = minimal == element ? inverse : element;
         DCHECK_NE(minimal, maximal);
 
-
         if (!_assignment.hasSameAssignmentValue(element, inverse) &&
             (!_order.isMinimalValue(maximal, _assignment) ||
              _assignment.literalIsAssigned(minimal)) &&
@@ -98,14 +100,16 @@ void CosyStatus::updateNotify(const Literal& literal) {
              _assignment.literalIsAssigned(maximal)))
             break;
 
-
         if (_lookup_index == initial)
             _lookup_infos.push_back(LookupInfo(variable, _lookup_index));
     }
+
     updateState();
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
+    _state = ACTIVE;
+
     if (_lookup_infos.empty())
         return;
 
@@ -152,6 +156,12 @@ void CosyStatus::updateState() {
     }
 }
 
+
+bool CosyStatus::isInESBP(Literal l) const {
+    unsigned int cycle = _permutation.literalInCycle(l);
+    return _keep[cycle].find(l) != _keep[cycle].end();
+}
+
 void
 CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::vector<Literal> literals;
@@ -173,13 +183,13 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
         if (_assignment.literalIsAssigned(element)) {
             var = element.variable();
             l = _assignment.getFalseLiteralForAssignedVariable(var);
-            if (used.insert(l).second)
+            if (used.insert(l).second && isInESBP(l))
                 literals.push_back(l);
         }
         if (_assignment.literalIsAssigned(inverse)) {
             var = inverse.variable();
             l = _assignment.getFalseLiteralForAssignedVariable(var);
-            if (used.insert(l).second)
+            if (used.insert(l).second && isInESBP(l))
                 literals.push_back(l);
         }
     }
@@ -235,6 +245,7 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
     injector->addClause(ClauseInjector::Type::ESBP_FORCING,
                         reason, std::move(literals));
 }
+
 
 std::string CosyStatus::debugString() const {
     Literal element, inverse;

@@ -65,6 +65,7 @@ class CosyStatus {
     CosyState _state;
 
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }
+    bool isInESBP(Literal l) const;
     void updateState();
 
     DISALLOW_COPY_AND_ASSIGN(CosyStatus);

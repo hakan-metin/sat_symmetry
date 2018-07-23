@@ -29,6 +29,7 @@ class CosyManager {
     void printStats() const { _stats.print(); }
 
  private:
+    bool _exist_esbp;
     const Group& _group;
     const Assignment& _assignment;
     std::unique_ptr<Order> _order;
