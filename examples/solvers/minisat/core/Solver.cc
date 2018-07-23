@@ -43,10 +43,8 @@ static IntOption     opt_restart_first     (_cat, "rfirst",      "The base resta
 static DoubleOption  opt_restart_inc       (_cat, "rinc",        "Restart interval increase factor", 2, DoubleRange(1, false, HUGE_VAL, false));
 static DoubleOption  opt_garbage_frac      (_cat, "gc-frac",     "The fraction of wasted memory allowed before a garbage collection is triggered",  0.20, DoubleRange(0, false, HUGE_VAL, false));
 
-
 static BoolOption    opt_learn_sbp         ("SYM", "learn-sbp",    "Add sbp to leanrt base", true);
 static BoolOption    opt_sbp_stop_prop     ("SYM", "sbp-stop-prop",    "Add sbp stop immediately propagate", false);
-
 
 //=================================================================================================
 // Constructor/Destructor:
@@ -442,7 +440,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
 
-    if (symmetry != nullptr) {
+    if (symmetry != nullptr && opt_sbp_stop_prop) {
         symmetry->updateNotify(p);
     }
 }
@@ -471,6 +469,10 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
 
         num_props++;
+
+        if (symmetry != nullptr && !opt_sbp_stop_prop) {
+            symmetry->updateNotify(p);
+        }
 
         confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         if (confl != CRef_Undef)

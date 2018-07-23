@@ -44,6 +44,9 @@ void CosyStatus::updateNotify(const Literal& literal) {
     Literal element, inverse;
     const BooleanVariable variable = literal.variable();
 
+    if (_state == INACTIVE)
+        return;
+
     for (; _lookup_index < _lookup_order.size(); ++_lookup_index) {
         element = _lookup_order[_lookup_index];
         inverse = _permutation.inverseOf(element);
@@ -58,6 +61,8 @@ void CosyStatus::updateNotify(const Literal& literal) {
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
+    _state = ACTIVE;
+
     if (_lookup_infos.empty())
         return;
 
