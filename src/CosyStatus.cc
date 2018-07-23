@@ -37,9 +37,14 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
 
     injector->addClause(ClauseInjector::Type::UNITS, kNoBooleanVariable,
                         std::move(literals));
+
+    _state = DISABLED;
 }
 
 void CosyStatus::updateNotify(const Literal& literal) {
+    if (_state == DISABLED)
+        return;
+
     unsigned int initial = _lookup_index;
     Literal element, inverse;
     const BooleanVariable variable = literal.variable();
@@ -61,6 +66,9 @@ void CosyStatus::updateNotify(const Literal& literal) {
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
+    if (_state == DISABLED)
+        return;
+
     _state = ACTIVE;
 
     if (_lookup_infos.empty())
