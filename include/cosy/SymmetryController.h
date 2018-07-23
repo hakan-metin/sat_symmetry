@@ -148,12 +148,15 @@ template<class T>
 inline void SymmetryController<T>::updateCancel(T literal_s) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
 
+    if (!_assignment.literalIsAssigned(literal_c))
+        return;
+
     _assignment.unassignLiteral(literal_c);
 
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _injector.removeClause(literal_c.variable());
+    // _injector.removeClause(literal_c.variable());
 }
 
 template<class T> inline bool

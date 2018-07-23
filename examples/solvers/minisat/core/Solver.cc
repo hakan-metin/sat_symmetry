@@ -442,7 +442,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
 
-    if (symmetry != nullptr) {
+    if (symmetry != nullptr && opt_sbp_stop_prop) {
         symmetry->updateNotify(p);
     }
 }
@@ -471,6 +471,10 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
 
         num_props++;
+
+        if (symmetry != nullptr && !opt_sbp_stop_prop) {
+            symmetry->updateNotify(p);
+        }
 
         confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
         if (confl != CRef_Undef)
