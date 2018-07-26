@@ -191,13 +191,13 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
         if (_assignment.literalIsAssigned(element)) {
             var = element.variable();
             l = _assignment.getFalseLiteralForAssignedVariable(var);
-            if (used.insert(l).second && isInESBP(l))
+            if (used.insert(l).second && (isInESBP(l) || i == _lookup_index))
                 literals.push_back(l);
         }
         if (_assignment.literalIsAssigned(inverse)) {
             var = inverse.variable();
             l = _assignment.getFalseLiteralForAssignedVariable(var);
-            if (used.insert(l).second && isInESBP(l))
+            if (used.insert(l).second && (isInESBP(l) || i == _lookup_index))
                 literals.push_back(l);
         }
     }
