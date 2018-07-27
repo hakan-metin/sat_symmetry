@@ -807,7 +807,7 @@ lbool Solver::solve_()
             std::vector<Lit> literals = symmetry->clauseToInject(type);
             assert(literals.size() == 1);
             Lit l = literals[0];
-            if (value(l) != l_Undef)
+            if (value(l) == l_Undef)
                 uncheckedEnqueue(l);
 	}
     }
