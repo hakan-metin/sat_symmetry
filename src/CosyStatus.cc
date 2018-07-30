@@ -18,7 +18,19 @@ CosyStatus::~CosyStatus() {
 }
 
 void CosyStatus::addLookupLiteral(const Literal& literal) {
-    _positions[literal] = _lookup_order.size();
+    const unsigned int index = _lookup_order.size();
+
+    if (_positions.find(literal) == _positions.end()) {
+        Literal image = _permutation.imageOf(literal);
+        while (image != literal) {
+            _positions[image] = index;
+            _positions[image.negated()] = index;
+            image = _permutation.imageOf(image);
+        }
+        _positions[image] = index;
+        _positions[image.negated()] = index;
+    }
+
     _lookup_order.push_back(literal);
 
     Literal l = literal;
@@ -74,9 +86,6 @@ void CosyStatus::updateNotify(const Literal& literal) {
     Literal positif = literal.isPositive() ? literal : literal.negated();
     unsigned int index = _positions.at(positif);
 
-    if (_state == INACTIVE)
-        return;
-
     if (index < _lookup_index) {
         element = _lookup_order[index];
         inverse = _permutation.inverseOf(element);
@@ -85,10 +94,12 @@ void CosyStatus::updateNotify(const Literal& literal) {
             _lookup_index = index;
             updateState();
             assert(_state == REDUCER);
-            return;
         }
         return;
     }
+
+    if (_state == INACTIVE)
+        return;
 
     for (; _lookup_index < _lookup_order.size(); ++_lookup_index) {
         element = _lookup_order[_lookup_index];
