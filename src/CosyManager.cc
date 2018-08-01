@@ -41,10 +41,10 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
 
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.notify_time);
-        });
+    IF_STATS_ENABLED
+        (ScopedTimeDistributionUpdater time(&_stats.total_time);
+         time.alsoUpdate(&_stats.notify_time);
+         );
 
     if (_exist_esbp)
         return;
