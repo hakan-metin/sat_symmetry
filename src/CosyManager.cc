@@ -66,10 +66,10 @@ void CosyManager::updateNotify(const Literal& literal,
 }
 
 void CosyManager::updateCancel(const Literal& literal) {
-    IF_STATS_ENABLED({
+    IF_STATS_ENABLED(
             ScopedTimeDistributionUpdater time(&_stats.total_time);
             time.alsoUpdate(&_stats.cancel_time);
-        });
+        );
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
