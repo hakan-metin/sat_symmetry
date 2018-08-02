@@ -29,6 +29,7 @@ std::vector<Literal>
 ClauseInjector::getClause(Type type, BooleanVariable cause) {
     switch (type) {
     case UNITS:        _stats.units.increment();           break;
+    case STATIC:       _stats.statik.increment();          break;
     case ESBP:         _stats.esbp.increment();            break;
     case ESBP_FORCING: _stats.esbp_forcing.increment();    break;
     default: CHECK_NOTNULL(nullptr);

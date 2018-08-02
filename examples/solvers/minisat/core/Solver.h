@@ -77,6 +77,8 @@ public:
     std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter;
     CRef cr_sbp;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    void learntSymmetryClause(cosy::ClauseInjector::Type type);
+
     void notifyCNFUnits();
 
     // Convenience versions of 'toDimacs()':

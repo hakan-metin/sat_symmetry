@@ -480,7 +480,8 @@ CRef Solver::propagate()
         if (confl != CRef_Undef)
             return confl;
 
-        learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
+        cosy::ClauseInjector::Type type = cosy::ClauseInjector::STATIC;
+        learntSymmetryClause(type);
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -805,7 +806,6 @@ lbool Solver::solve_()
 
         cosy::ClauseInjector::Type type = cosy::ClauseInjector::UNITS;
 	while (symmetry->hasClauseToInject(type)) {
-
             std::vector<Lit> literals = symmetry->clauseToInject(type);
             assert(literals.size() == 1);
             Lit l = literals[0];
@@ -980,6 +980,24 @@ void Solver::garbageCollect()
                ca.size()*ClauseAllocator::Unit_Size, to.size()*ClauseAllocator::Unit_Size);
     to.moveTo(ca);
 }
+
+void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
+    if (symmetry != nullptr) {
+        while (symmetry->hasClauseToInject(type)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
+
+            // Dirty make a copy of vector
+            vec<Lit> sbp;
+            for (Lit l : vsbp) {
+                sbp.push(l);
+            }
+            CRef cr = ca.alloc(sbp, true);
+            learnts.push(cr);
+            attachClause(cr);
+        }
+    }
+}
+
 
 CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {

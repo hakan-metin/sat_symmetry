@@ -61,6 +61,7 @@ class ClauseInjector {
         UNITS,
         ESBP,
         ESBP_FORCING,
+        STATIC,
         NR_TYPES
     };
 
@@ -84,10 +85,12 @@ class ClauseInjector {
     struct Stats : StatsGroup {
         Stats() : StatsGroup("Clause Injector"),
                   units("Number of Units", this),
+                  statik("Number of Static SBP", this),
                   esbp("Number of ESBP", this),
                   esbp_forcing("Number of ESBP Forcing", this) {}
 
         CounterStat units;
+        CounterStat statik;
         CounterStat esbp;
         CounterStat esbp_forcing;
     };

@@ -23,7 +23,7 @@ enum CosyState {
     ACTIVE,
     REDUCER,
     FORCE_LEX_LEADER,
-    DISABLED
+    DISABLED,
 };
 
 class CosyStatus {
@@ -43,6 +43,8 @@ class CosyStatus {
     void generateESBP(BooleanVariable reason, ClauseInjector *injector);
     void generateForceLexLeaderESBP(BooleanVariable reason,
                                     ClauseInjector *injector);
+    void generateStaticSBP(unsigned int index, ClauseInjector *injector);
+    void generateStaticSBPUntil(unsigned int index, ClauseInjector *injector);
 
     std::string debugString() const;
 
@@ -54,6 +56,7 @@ class CosyStatus {
     unsigned int _lookup_index;
     std::vector<Literal> _lookup_order;
 
+    std::unordered_set<BooleanVariable> _generated;
     std::vector<std::unordered_set<Literal>> _keep;
     std::unordered_map<Literal, unsigned int> _positions;
 

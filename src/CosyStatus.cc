@@ -87,16 +87,22 @@ void CosyStatus::updateNotify(const Literal& literal) {
     unsigned int index = _positions.at(positif);
 
     if (index < _lookup_index) {
-        element = _lookup_order[index];
-        inverse = _permutation.inverseOf(element);
-
-        if (!_assignment.hasSameAssignmentValue(element, inverse)) {
-            _lookup_index = index;
-            updateState();
-            assert(_state == REDUCER);
-        }
-        return;
+        _lookup_index = index;
+	_state = ACTIVE;
     }
+
+
+    // if (index < _lookup_index) {
+    //     element = _lookup_order[index];
+    //     inverse = _permutation.inverseOf(element);
+
+    //     if (!_assignment.hasSameAssignmentValue(element, inverse)) {
+    //         _lookup_index = index;
+    //         updateState();
+    //         assert(_state == REDUCER);
+    //     }
+    //     return;
+    // }
 
     if (_state == INACTIVE)
         return;
@@ -217,6 +223,70 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::swap(literals[0], literals[1]);
 
     injector->addClause(ClauseInjector::Type::ESBP, reason,
+                        std::move(literals));
+    generateStaticSBPUntil(_lookup_index, injector);
+}
+
+void CosyStatus::generateStaticSBPUntil(unsigned int index,
+                                        ClauseInjector *injector) {
+    Literal element, inverse;
+
+    for (unsigned int i=0; i<index; i++) {
+        element = _lookup_order[i];
+        inverse = _permutation.inverseOf(element);
+
+        if (_generated.find(element.variable()) != _generated.end() &&
+            _generated.find(inverse.variable()) != _generated.end())
+            continue;
+
+	_generated.insert(element.variable());
+        _generated.insert(inverse.variable());
+
+	generateStaticSBP(i, injector);
+    }
+}
+
+void CosyStatus::generateStaticSBP(unsigned int index,
+                                   ClauseInjector *injector) {
+    Literal element, inverse, l;
+    std::vector<Literal> literals;
+    std::unordered_set<Literal> used;
+
+    element = _lookup_order[index];
+    inverse = _permutation.inverseOf(element);
+
+    const Literal minimal = _order.leq(element, inverse);
+    const Literal maximal = minimal == element ? inverse : element;
+
+    if (_order.valueMode() == FALSE_LESS_TRUE) {
+        literals.push_back(minimal.negated());
+        literals.push_back(maximal);
+    } else if (_order.valueMode() == TRUE_LESS_FALSE) {
+        literals.push_back(minimal);
+        literals.push_back(maximal.negated());
+    }
+
+    for (unsigned int i=0; i<index; i++) {
+        element = _lookup_order[i];
+        inverse = _permutation.inverseOf(element);
+
+        CHECK(element != inverse.negated());
+
+        l = _order.valueMode() == TRUE_LESS_FALSE ? element : element.negated();
+        if (used.insert(l).second && isInESBP(l))
+            literals.push_back(l);
+
+        l = _order.valueMode() == TRUE_LESS_FALSE ? inverse : inverse.negated();
+        if (used.insert(l).second && isInESBP(l))
+            literals.push_back(l);
+    }
+
+    // for (const Literal &l : literals) {
+    //     std::cout << l.signedValue() << " ";
+    // }
+    // std::cout << std::endl;
+
+    injector->addClause(ClauseInjector::Type::STATIC, kNoBooleanVariable,
                         std::move(literals));
 }
 
