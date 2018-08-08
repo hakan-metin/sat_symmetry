@@ -62,6 +62,9 @@ class CosyStatus {
     std::deque<LookupInfo> _lookup_infos;
     CosyState _state;
 
+    std::unordered_set<Literal> _first;
+    std::unordered_set<Literal> _seen;
+
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }
     void updateState();
 

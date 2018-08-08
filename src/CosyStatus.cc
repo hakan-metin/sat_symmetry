@@ -17,6 +17,16 @@ CosyStatus::~CosyStatus() {
 }
 
 void CosyStatus::addLookupLiteral(const Literal& literal) {
+    Literal element = literal;
+
+    CHECK(literal.isPositive());
+    if (_seen.find(literal) == _seen.end()) {
+        _first.insert(literal);
+        do {
+            _seen.insert(element);
+            element = _permutation.imageOf(element);
+        } while (element != literal);
+    }
     _lookup_order.push_back(literal);
 }
 
@@ -99,7 +109,8 @@ void CosyStatus::updateState() {
 
     if (_assignment.bothLiteralsAreAssigned(element, inverse)) {
         DCHECK(!_assignment.hasSameAssignmentValue(element, inverse));
-        if (_order.isMinimalValue(minimal, _assignment))
+        if (_order.isMinimalValue(minimal, _assignment) &&
+            _first.find(element) != _first.end())
             _state = INACTIVE;
         else
             _state = REDUCER;
@@ -122,6 +133,7 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::vector<Literal> literals;
     std::unordered_set<Literal> used;
     Literal element, inverse, l;
+    BooleanVariable var;
 
     DCHECK(!isLookupEnd());
     DCHECK_EQ(_state, REDUCER);
@@ -136,13 +148,18 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
 
         DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
 
-        l = _assignment.getFalseLiteralForAssignedVariable(element.variable());
-        if (used.insert(l).second)
-            literals.push_back(l);
-
-        l = _assignment.getFalseLiteralForAssignedVariable(inverse.variable());
-        if (used.insert(l).second)
-            literals.push_back(l);
+        if (_assignment.literalIsAssigned(element)) {
+            var = element.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second)
+                literals.push_back(l);
+        }
+        if (_assignment.literalIsAssigned(inverse)) {
+            var = inverse.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second)
+                literals.push_back(l);
+        }
     }
 
     DCHECK_GE(literals.size(), 2);
