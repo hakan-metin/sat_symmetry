@@ -470,15 +470,7 @@ CRef Solver::propagate()
 
         num_props++;
 
-        if (symmetry != nullptr && !opt_sbp_stop_prop) {
-            symmetry->updateNotify(p);
-        }
-
-        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        if (confl != CRef_Undef)
-            return confl;
-
-        learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
+        // learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -531,6 +523,10 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
+        if (symmetry != nullptr && !opt_sbp_stop_prop) {
+            symmetry->updateNotify(p);
+        }
+        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
 
     }
     propagations += num_props;
@@ -659,10 +655,10 @@ lbool Solver::search(int nof_conflicts)
 
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level);
-            if (cr_sbp != CRef_Undef) {
-                ca.free(cr_sbp);
-                cr_sbp = CRef_Undef;
-            }
+            // if (cr_sbp != CRef_Undef) {
+            //     ca.free(cr_sbp);
+            //     cr_sbp = CRef_Undef;
+            // }
             cancelUntil(backtrack_level);
 
 
