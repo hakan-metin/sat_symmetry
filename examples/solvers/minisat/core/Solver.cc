@@ -464,9 +464,9 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-	if (confl != CRef_Undef)
-	    return confl;
+        // confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+	// if (confl != CRef_Undef)
+	//     return confl;
 	
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -510,8 +510,7 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
-
-
+	learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
     }
     propagations += num_props;
     simpDB_props -= num_props;
