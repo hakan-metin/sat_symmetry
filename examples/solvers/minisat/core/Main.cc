@@ -137,6 +137,18 @@ int main(int argc, char** argv)
             printf("============================[ Problem Statistics ]=============================\n");
             printf("|                                                                             |\n"); }
 
+
+	std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
+            (new MinisatLiteralAdapter());
+	
+        std::string cnf_file = std::string(argv[1]);
+	
+        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
+            (new cosy::SymmetryController<Minisat::Lit>
+             (cnf_file,
+              cosy::SymmetryFinder::Automorphism::BLISS,
+              adapter));
+	
         parse_DIMACS(in, S);
         gzclose(in);
         FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
@@ -166,16 +178,6 @@ int main(int argc, char** argv)
             exit(20);
         }
 
-        std::unique_ptr<cosy::LiteralAdapter<Minisat::Lit>> adapter
-            (new MinisatLiteralAdapter());
-
-        std::string cnf_file = std::string(argv[1]);
-
-        S.symmetry = std::unique_ptr<cosy::SymmetryController<Minisat::Lit>>
-            (new cosy::SymmetryController<Minisat::Lit>
-             (cnf_file,
-              cosy::SymmetryFinder::Automorphism::BLISS,
-              adapter));
 
         vec<Lit> dummy;
         lbool ret = S.solveLimited(dummy);
