@@ -435,9 +435,9 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
 
-    if (symmetry != nullptr) {
-        symmetry->updateNotify(p);
-    }
+    // if (symmetry != nullptr) {
+    //     symmetry->updateNotify(p);
+    // }
 }
 
 
@@ -510,7 +510,11 @@ CRef Solver::propagate()
         NextClause:;
         }
         ws.shrink(i - j);
-	learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+	if (symmetry != nullptr) {
+	    symmetry->updateNotify(p);
+	    learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+	}
+
     }
     propagations += num_props;
     simpDB_props -= num_props;
