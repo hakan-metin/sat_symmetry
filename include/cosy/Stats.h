@@ -149,9 +149,6 @@ class CounterStat : public Stat {
     int64 _value;
 };
 
-
-#define COSY_STATS
-
 #ifdef COSY_STATS
 using  ScopedTimeDistributionUpdater = EnableScopedTimeDistributionUpdater;
 #define IF_STATS_ENABLED(instructions) instructions

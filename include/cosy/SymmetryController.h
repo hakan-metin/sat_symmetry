@@ -8,7 +8,6 @@
 #include <vector>
 #include <string>
 
-#define COSY_STATS
 
 #include "cosy/CosyManager.h"
 #include "cosy/ClauseInjector.h"
@@ -40,7 +39,7 @@ class SymmetryController {
 
     void enableCosy(OrderMode vars, ValueMode value);
 
-    void updateNotify(T literal_s, unsigned int level, bool isDecision);
+    void updateNotify(T literal_s);
     void updateCancel(T literal_s);
 
     bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
@@ -139,9 +138,7 @@ inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
 }
 
 template<class T>
-inline void SymmetryController<T>::updateNotify(T literal_s,
-                                                unsigned int level,
-                                                bool isDecision) {
+inline void SymmetryController<T>::updateNotify(T literal_s) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     _assignment.assignFromTrueLiteral(literal_c);
     if (_cosy_manager)

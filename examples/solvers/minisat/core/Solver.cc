@@ -436,7 +436,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     trail.push_(p);
 
     if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
+        symmetry->updateNotify(p);
     }
 }
 

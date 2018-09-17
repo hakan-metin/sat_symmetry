@@ -17,6 +17,16 @@ CosyStatus::~CosyStatus() {
 }
 
 void CosyStatus::addLookupLiteral(const Literal& literal) {
+    Literal element = literal;
+
+    CHECK(literal.isPositive());
+    if (_seen.find(literal) == _seen.end()) {
+        _first.insert(literal);
+        do {
+            _seen.insert(element);
+            element = _permutation.imageOf(element);
+        } while (element != literal);
+    }
     _lookup_order.push_back(literal);
 }
 
@@ -37,12 +47,20 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
 
     injector->addClause(ClauseInjector::Type::UNITS, kNoBooleanVariable,
                         std::move(literals));
+
+    _state = DISABLED;
 }
 
 void CosyStatus::updateNotify(const Literal& literal) {
+    if (_state == DISABLED)
+        return;
+
     unsigned int initial = _lookup_index;
     Literal element, inverse;
     const BooleanVariable variable = literal.variable();
+
+    if (_state == INACTIVE)
+        return;
 
     for (; _lookup_index < _lookup_order.size(); ++_lookup_index) {
         element = _lookup_order[_lookup_index];
@@ -58,6 +76,11 @@ void CosyStatus::updateNotify(const Literal& literal) {
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
+    if (_state == DISABLED)
+        return;
+
+    _state = ACTIVE;
+
     if (_lookup_infos.empty())
         return;
 
@@ -86,7 +109,8 @@ void CosyStatus::updateState() {
 
     if (_assignment.bothLiteralsAreAssigned(element, inverse)) {
         DCHECK(!_assignment.hasSameAssignmentValue(element, inverse));
-        if (_order.isMinimalValue(minimal, _assignment))
+        if (_order.isMinimalValue(minimal, _assignment) &&
+            _first.find(element) != _first.end())
             _state = INACTIVE;
         else
             _state = REDUCER;
@@ -109,6 +133,7 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::vector<Literal> literals;
     std::unordered_set<Literal> used;
     Literal element, inverse, l;
+    BooleanVariable var;
 
     DCHECK(!isLookupEnd());
     DCHECK_EQ(_state, REDUCER);
@@ -123,13 +148,18 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
 
         DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
 
-        l = _assignment.getFalseLiteralForAssignedVariable(element.variable());
-        if (used.insert(l).second)
-            literals.push_back(l);
-
-        l = _assignment.getFalseLiteralForAssignedVariable(inverse.variable());
-        if (used.insert(l).second)
-            literals.push_back(l);
+        if (_assignment.literalIsAssigned(element)) {
+            var = element.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second)
+                literals.push_back(l);
+        }
+        if (_assignment.literalIsAssigned(inverse)) {
+            var = inverse.variable();
+            l = _assignment.getFalseLiteralForAssignedVariable(var);
+            if (used.insert(l).second)
+                literals.push_back(l);
+        }
     }
 
     DCHECK_GE(literals.size(), 2);
