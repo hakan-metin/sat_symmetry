@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <memory>
-#include <unordered_set>
+#include <set>
 #include <vector>
 
 #include "cosy/Clause.h"
@@ -48,7 +48,7 @@ class CNFModel {
     int64 _num_large_clauses;
 
     std::vector<std::unique_ptr<Clause>> _clauses;
-    std::unordered_set<size_t> _clauses_tag;
+    std::set<size_t> _clauses_tag;
 
     std::vector<int64> _positive_occurences;
     std::vector<int64> _negative_occurences;

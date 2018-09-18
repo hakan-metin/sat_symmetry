@@ -9,7 +9,7 @@ void Permutation::addToCurrentCycle(Literal x) {
     const int back = _cycles_lim.empty() ? 0 : _cycles_lim.back();
     _cycles.push_back(x);
 
-    // Add image and inverse to access in lookup unordered_map
+    // Add image and inverse to access in lookup map
     if (_cycles.size() > 0 && cs != back) {
         const Literal e = _cycles[cs - 1];
         const Literal i = _cycles[cs];
@@ -28,7 +28,7 @@ void Permutation::closeCurrentCycle() {
     DCHECK_GE(sz - last, 2);
     _cycles_lim.push_back(sz);
 
-    // Add image and inverse to access in lookup unordered_map
+    // Add image and inverse to access in lookup map
     const int num_cycle = _cycles_lim.size() - 1;
     const Literal e = lastElementInCycle(num_cycle);
     const Literal i = *(cycle(num_cycle).begin());

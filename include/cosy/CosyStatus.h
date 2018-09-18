@@ -5,7 +5,7 @@
 
 #include <deque>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <string>
 
 #include "cosy/Assignment.h"
@@ -62,8 +62,8 @@ class CosyStatus {
     std::deque<LookupInfo> _lookup_infos;
     CosyState _state;
 
-    std::unordered_set<Literal> _first;
-    std::unordered_set<Literal> _seen;
+    std::set<Literal> _first;
+    std::set<Literal> _seen;
 
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }
     void updateState();

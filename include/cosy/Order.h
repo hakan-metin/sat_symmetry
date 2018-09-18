@@ -4,7 +4,7 @@
 #define INCLUDE_COSY_ORDER_H_
 
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <memory>
 #include <limits>
@@ -64,7 +64,7 @@ class Order {
     const unsigned int _num_vars;
     ValueMode _valueMode;
     std::vector<Literal> _order;
-    std::unordered_map<Literal, unsigned int> _indexes;
+    std::map<Literal, unsigned int> _indexes;
     LiteralIndex _minimal, _maximal;
 
     void add(const Literal& literal);
@@ -123,7 +123,7 @@ class BreakIDOrder : public Order {
                             const Group& group) :
         Order(num_vars, mode) {
         std::vector<Permutation*> Q, filter;
-        std::unordered_map<BooleanVariable, int64> occurence_generators;
+        std::map<BooleanVariable, int64> occurence_generators;
         Orbits orbits;
         unsigned int largestOrbit;
         BooleanVariable next;

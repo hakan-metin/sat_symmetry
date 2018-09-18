@@ -3,7 +3,7 @@
 #ifndef INCLUDE_COSY_PERMUTATION_H_
 #define INCLUDE_COSY_PERMUTATION_H_
 
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <string>
 
@@ -42,8 +42,8 @@ class Permutation {
     std::vector<Literal> _cycles;
     std::vector<int> _cycles_lim;
 
-    std::unordered_map<Literal, Literal> _image;
-    std::unordered_map<Literal, Literal> _inverse;
+    std::map<Literal, Literal> _image;
+    std::map<Literal, Literal> _inverse;
 
     DISALLOW_COPY_AND_ASSIGN(Permutation);
 };

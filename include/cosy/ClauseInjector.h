@@ -4,9 +4,9 @@
 #define INCLUDE_COSY_CLAUSEINJECTOR_H_
 
 #include <deque>
-#include <unordered_set>
+#include <set>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <utility>
 
 #include "cosy/Clause.h"
@@ -50,7 +50,7 @@ class Injector {
     }
 
  private:
-    std::unordered_map<BooleanVariable,
+    std::map<BooleanVariable,
                        std::vector<std::vector<Literal>>> _clauses;
 };
 

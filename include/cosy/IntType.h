@@ -86,7 +86,7 @@
 // the stored value into protocol buffer fields and using it as printf args.
 //
 // The class also defines a hash functor that allows the IntType to be used
-// as key to hashable containers such as std::unordered_{map|set}.
+// as key to hashable containers such as std::{map|set}.
 //
 // We suggest using the IntTypeIndexedContainer wrapper around STL
 // std::vector (see int_type_indexed_std::vector.h) if an IntType is intended
@@ -145,7 +145,7 @@
 #define SAT_UTIL_INT_TYPE_H_
 
 #include <stddef.h>
-#include <unordered_map>
+#include <map>
 #include <iosfwd>
 #include <ostream>  // NOLINT
 

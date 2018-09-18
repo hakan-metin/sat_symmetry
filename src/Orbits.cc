@@ -5,7 +5,7 @@
 namespace cosy {
 
 void Orbits::assign(const std::vector<Permutation*> permutations) {
-    std::unordered_set<BooleanVariable> used;
+    std::set<BooleanVariable> used;
     DisjointSets disjointSets;
     int e, i;
 
@@ -33,7 +33,7 @@ void Orbits::assign(const std::vector<Permutation*> permutations) {
         }
     }
 
-    std::unordered_map<int, std::vector<BooleanVariable>> m_orbits;
+    std::map<int, std::vector<BooleanVariable>> m_orbits;
     for (const BooleanVariable& variable : _symmetrics) {
         int representant = disjointSets.Find(variable.value());
         m_orbits[representant].push_back(variable);

@@ -131,7 +131,7 @@ void CosyStatus::updateState() {
 void
 CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     std::vector<Literal> literals;
-    std::unordered_set<Literal> used;
+    std::set<Literal> used;
     Literal element, inverse, l;
     BooleanVariable var;
 
@@ -172,7 +172,7 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
 void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
                                             ClauseInjector *injector) {
     std::vector<Literal> literals;
-    std::unordered_set<Literal> used;
+    std::set<Literal> used;
     Literal element, inverse, l, affected, undef;
 
     DCHECK(!isLookupEnd());

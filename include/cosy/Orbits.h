@@ -4,8 +4,8 @@
 #define INCLUDE_COSY_ORBITS_H_
 
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
+#include <set>
+#include <map>
 
 #include "cosy/DisjointSets.h"
 #include "cosy/Literal.h"
