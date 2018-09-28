@@ -8,8 +8,6 @@
 #include <vector>
 #include <string>
 
-#define COSY_STATS
-
 #include "cosy/CosyManager.h"
 #include "cosy/ClauseInjector.h"
 #include "cosy/CNFModel.h"
