@@ -5,13 +5,14 @@
 
 namespace cosy {
 
-Group::Group() {
+Group::Group() : _num_augmented_generators(0) {
 }
 
 Group::~Group() {
 }
 
-void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
+void Group::addPermutation(std::unique_ptr<Permutation>&& permutation,
+                           bool augment /* = true */) {
     CHECK_NOTNULL(permutation);
 
     const unsigned int permutation_index = _permutations.size();
@@ -23,6 +24,12 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
     if (isPermutationSpurious(permutation))
         return;
 
+    // unsigned int order = permutation->order();
+    // if (augment && order > 2) {
+    //     std::unique_ptr<Permutation> p = permutation->mult(order - 1);
+    //     addPermutation(std::move(p), false);
+    //     _num_augmented_generators++;
+    // }
 
     if (permutation->size() > _watchers.size())
         _watchers.resize(permutation->size());
@@ -32,7 +39,7 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
 
         for (const Literal& image : permutation->cycle(c)) {
             const int index = image.variable().value();
-            _watchers[index].insert(permutation_index);
+            _watchers[index].push_back(permutation_index);
 
             const BooleanVariable variable = image.variable();
             _symmetric.insert(variable);
@@ -46,6 +53,20 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation) {
 
     _permutations.emplace_back(permutation.release());
 }
+
+void Group::augmentAll() {
+    unsigned int sz = _permutations.size();
+    for (unsigned int i=0; i<sz; i++) {
+        const std::unique_ptr<Permutation>& permutation = _permutations[i];
+            unsigned int order = permutation->order();
+            if (order > 2) {
+                std::unique_ptr<Permutation> p = permutation->mult(order - 1);
+                addPermutation(std::move(p), false);
+                _num_augmented_generators++;
+            }
+    }
+}
+
 
 Group::Iterator Group::watch(BooleanVariable variable) const {
     const int index = variable.value();
@@ -69,7 +90,14 @@ bool Group::isPermutationSpurious(const std::unique_ptr<Permutation>& p) const {
 }
 
 void Group::summarize(unsigned int num_vars) const {
-    Printer::printStat("Number of generators", numberOfPermutations());
+    int64 initial, augmented, total;
+    total = numberOfPermutations();
+    augmented = numberOfAugmentedPermutations();
+    initial = total - augmented;
+
+    Printer::printStat("Number of generators", total);
+    Printer::printStat(" |- Number of initial generators", initial);
+    Printer::printStat(" |- Number of augmented generators", augmented);
     Printer::printStat("Number of vars in generators",
                        numberOfSymmetricVariables(),
                        static_cast<int64>(num_vars));

@@ -80,9 +80,8 @@ void CosyStatus::updateState() {
     element = _lookup_order[_lookup_index];
     inverse = _permutation.inverseOf(element);
 
-    const Literal minimal = _order.leq(element, inverse);
-    const Literal maximal = minimal == element ? inverse : element;
-
+    const Literal minimal = element;
+    const Literal maximal = inverse;
 
     if (_assignment.bothLiteralsAreAssigned(element, inverse)) {
         DCHECK(!_assignment.hasSameAssignmentValue(element, inverse));

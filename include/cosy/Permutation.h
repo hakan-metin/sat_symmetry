@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include <string>
 
 #include "cosy/Literal.h"
@@ -34,6 +35,9 @@ class Permutation {
 
     bool isTrivialImage(const Literal& element) const;
     bool isTrivialInverse(const Literal& element) const;
+
+    int order() const;
+    std::unique_ptr<Permutation> mult(int order) const;
 
     void debugPrint() const;
 
