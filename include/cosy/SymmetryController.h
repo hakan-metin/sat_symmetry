@@ -119,7 +119,7 @@ inline SymmetryController<T>::SymmetryController(
     CHECK_NOTNULL(_symmetry_finder);
     _symmetry_finder->findAutomorphism(&_group);
 
-    _group.augmentAll();
+    // _group.augmentAll();
 }
 
 template<class T>

@@ -24,12 +24,12 @@ void Group::addPermutation(std::unique_ptr<Permutation>&& permutation,
     if (isPermutationSpurious(permutation))
         return;
 
-    // unsigned int order = permutation->order();
-    // if (augment && order > 2) {
-    //     std::unique_ptr<Permutation> p = permutation->mult(order - 1);
-    //     addPermutation(std::move(p), false);
-    //     _num_augmented_generators++;
-    // }
+    unsigned int order = permutation->order();
+    if (augment && order > 2) {
+        std::unique_ptr<Permutation> p = permutation->mult(order - 1);
+        addPermutation(std::move(p), false);
+        _num_augmented_generators++;
+    }
 
     if (permutation->size() > _watchers.size())
         _watchers.resize(permutation->size());
