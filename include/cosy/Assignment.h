@@ -33,6 +33,8 @@ class Assignment {
     Literal getTrueLiteralForAssignedVariable(BooleanVariable var) const;
     Literal getFalseLiteralForAssignedVariable(BooleanVariable var) const;
 
+    std::string debugStringValue(Literal x) const;
+
     unsigned int numberOfVariables() const;
 
  private:
@@ -92,6 +94,12 @@ inline Literal
 Assignment::getFalseLiteralForAssignedVariable(BooleanVariable var) const {
     DCHECK(variableIsAssigned(var));
     return Literal(var, !_assignment.IsSet(LiteralIndex(var.value() << 1)));
+}
+
+inline std::string Assignment::debugStringValue(Literal x) const {
+    if (literalIsTrue(x)) return "T";
+    if (literalIsFalse(x)) return "F";
+    return "U";
 }
 
 inline unsigned int Assignment::numberOfVariables() const {

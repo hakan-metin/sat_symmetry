@@ -10,7 +10,8 @@ CosyStatus::CosyStatus(const Permutation &permutation, const Order &order,
     _order(order),
     _assignment(assignment),
     _lookup_index(0),
-    _state(ACTIVE) {
+    _state(ACTIVE),
+    _generated(false) {
 }
 
 CosyStatus::~CosyStatus() {
@@ -58,6 +59,7 @@ void CosyStatus::updateNotify(const Literal& literal) {
 }
 
 void CosyStatus::updateCancel(const Literal& literal) {
+    _state = ACTIVE;
     if (_lookup_infos.empty())
         return;
 
@@ -73,7 +75,7 @@ void CosyStatus::updateState() {
     Literal element, inverse;
 
     if (isLookupEnd()) {
-        _state = ACTIVE;  // Special case not really active
+        _state = INACTIVE;
         return;
     }
 
@@ -83,6 +85,8 @@ void CosyStatus::updateState() {
     const Literal minimal = _order.leq(element, inverse);
     const Literal maximal = minimal == element ? inverse : element;
 
+    // const Literal minimal = element;
+    // const Literal maximal = inverse;
 
     if (_assignment.bothLiteralsAreAssigned(element, inverse)) {
         DCHECK(!_assignment.hasSameAssignmentValue(element, inverse));
@@ -103,6 +107,67 @@ void CosyStatus::updateState() {
             _state = ACTIVE;
     }
 }
+
+
+
+void CosyStatus::updateStatic() {
+    Literal element, image;
+    for (; _lookup_index < _lookup_order.size(); ++_lookup_index) {
+        element = _lookup_order[_lookup_index];
+        image = _permutation.imageOf(element);
+
+        if (!_assignment.hasSameAssignmentValue(element, image))
+            break;
+        _generated = false;
+    }
+
+    updateState();
+}
+
+void CosyStatus::generateStaticESBP(ClauseInjector *injector) {
+    std::vector<Literal> literals;
+    std::unordered_set<Literal> used;
+    Literal element, inverse, l, negated;
+
+    updateStatic();
+    if (_state == INACTIVE || _generated || isLookupEnd())
+        return;
+
+    for (unsigned int i = 0; i < _lookup_index; i++) {
+        element = _lookup_order[i];
+        inverse = _permutation.inverseOf(element);
+
+        DCHECK(_assignment.bothLiteralsAreAssigned(element, inverse));
+
+        l = _assignment.getFalseLiteralForAssignedVariable(element.variable());
+        if (used.insert(l).second)
+            literals.push_back(l);
+
+        l = _assignment.getFalseLiteralForAssignedVariable(inverse.variable());
+        if (used.insert(l).second)
+            literals.push_back(l);
+    }
+
+    element = _lookup_order[_lookup_index];
+    negated = element.negated();
+
+    inverse = _permutation.inverseOf(negated);
+
+    while (inverse != negated) {
+        std::vector<Literal> esbp;
+
+        esbp.push_back(element);
+        esbp.push_back(inverse);
+        for (Literal lit : literals)
+            esbp.push_back(lit);
+        injector->addClause(ClauseInjector::Type::ESBP, kNoBooleanVariable,
+                            std::move(esbp));
+
+        inverse = _permutation.inverseOf(inverse);
+    }
+    _generated = true;
+}
+
 
 void
 CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
@@ -135,35 +200,35 @@ CosyStatus::generateESBP(BooleanVariable reason, ClauseInjector *injector) {
     DCHECK_GE(literals.size(), 2);
     std::swap(literals[0], literals[1]);
 
+    // LOG(INFO) << "reaseon : " << reason;
+    // for (Literal lit : literals)
+    //     std::cout << lit.signedValue() << " " << _assignment.debugStringValue(lit)<< " -- ";
+    // std::cout << std::endl;
+
     injector->addClause(ClauseInjector::Type::ESBP, reason,
                         std::move(literals));
 }
 
-void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
-                                            ClauseInjector *injector) {
+void CosyStatus::generateForceLexLeaderESBP(ClauseInjector *injector) {
     std::vector<Literal> literals;
     std::unordered_set<Literal> used;
-    Literal element, inverse, l, affected, undef;
+    Literal element, inverse, l, affected, negated;
 
     DCHECK(!isLookupEnd());
 
     element = _lookup_order[_lookup_index];
-    inverse = _permutation.inverseOf(element);
+    negated = element.negated();
+    inverse = _permutation.inverseOf(negated);
 
-    undef = _assignment.literalIsAssigned(element) ? inverse : element;
-    affected = _assignment.literalIsAssigned(inverse) ? inverse : element;
-
-    l = Literal(undef.variable(), _assignment.literalIsTrue(affected));
-    if (used.insert(l).second)
-        literals.push_back(l);
-
-    l = _assignment.getFalseLiteralForAssignedVariable(reason);
-    if (used.insert(l).second)
-        literals.push_back(l);
-
-    l = _assignment.getFalseLiteralForAssignedVariable(affected.variable());
-    if (used.insert(l).second)
-        literals.push_back(l);
+    if (_assignment.literalIsAssigned(element)) {
+        DCHECK(!_assignment.literalIsAssigned(inverse));
+        literals.push_back(inverse);
+        literals.push_back(element);
+    } else {
+        DCHECK(!_assignment.literalIsAssigned(element));
+        literals.push_back(element);
+        literals.push_back(inverse);
+    }
 
     for (unsigned int i = 0; i < _lookup_index; i++) {
         element = _lookup_order[i];
@@ -180,8 +245,17 @@ void CosyStatus::generateForceLexLeaderESBP(BooleanVariable reason,
             literals.push_back(l);
     }
 
+
+    // LOG(INFO) << debugString();
+    // for (Literal lit : literals)
+    //     std::cout << lit.signedValue() << " ";
+    // std::cout << std::endl;
+    // for (Literal lit : literals)
+    //     std::cout << _assignment.debugStringValue(lit)<< " -- ";
+    // std::cout << std::endl;
+
     injector->addClause(ClauseInjector::Type::ESBP_FORCING,
-                        reason, std::move(literals));
+                        kNoBooleanVariable, std::move(literals));
 }
 
 std::string CosyStatus::debugString() const {

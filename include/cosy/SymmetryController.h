@@ -38,8 +38,11 @@ class SymmetryController {
 
     void enableCosy(OrderMode vars, ValueMode value);
 
-    void updateNotify(T literal_s, unsigned int level, bool isDecision);
+    void generateStaticESBP();
+    void updateNotify(T literal_s);
     void updateCancel(T literal_s);
+
+    void propagateEnd();
 
     bool hasClauseToInject(ClauseInjector::Type type, T literal_s) const;
     std::vector<T> clauseToInject(ClauseInjector::Type type, T literal_s);
@@ -65,6 +68,10 @@ class SymmetryController {
 };
 
 // Implementation
+template<class T> inline
+void SymmetryController<T>::generateStaticESBP() {
+    _cosy_manager->generateStaticESBPs(&_injector);
+}
 
 template<class T> inline
 bool SymmetryController<T>::loadCNFProblem(const std::string cnf_filename) {
@@ -118,6 +125,8 @@ inline SymmetryController<T>::SymmetryController(
 
     CHECK_NOTNULL(_symmetry_finder);
     _symmetry_finder->findAutomorphism(&_group);
+    // _group.debugPrint();
+    //    exit(0);
 }
 
 template<class T>
@@ -137,9 +146,7 @@ inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
 }
 
 template<class T>
-inline void SymmetryController<T>::updateNotify(T literal_s,
-                                                unsigned int level,
-                                                bool isDecision) {
+inline void SymmetryController<T>::updateNotify(T literal_s) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
     _assignment.assignFromTrueLiteral(literal_c);
     if (_cosy_manager)
@@ -150,13 +157,24 @@ template<class T>
 inline void SymmetryController<T>::updateCancel(T literal_s) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
 
+    if (!_assignment.literalIsAssigned(literal_c))
+        return;
+
     _assignment.unassignLiteral(literal_c);
 
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _injector.removeClause(literal_c.variable());
+    _injector.removeClause(kNoBooleanVariable);
 }
+
+
+template<class T> inline void
+SymmetryController<T>::propagateEnd() {
+    if (_cosy_manager)
+        _cosy_manager->searchAssertiveClause(&_injector);
+}
+
 
 template<class T> inline bool
 SymmetryController<T>::hasClauseToInject(ClauseInjector::Type type,
@@ -171,6 +189,10 @@ SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
     cosy::Literal literal_c =  _literal_adapter->convertTo(literal_s);
     std::vector<cosy::Literal> literals_c =
         std::move(_injector.getClause(type, literal_c.variable()));
+
+    // for (cosy::Literal lit: literals_c)
+    //     std::cout << lit.signedValue() << " ";
+    // std::cout << std::endl;
     std::vector<T> literals_s = adaptVector(literals_c);
     return literals_s;
 }

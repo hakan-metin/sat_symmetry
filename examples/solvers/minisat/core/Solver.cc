@@ -434,10 +434,6 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
-
-    if (symmetry != nullptr) {
-        symmetry->updateNotify(p, decisionLevel(), from == CRef_Undef);
-    }
 }
 
 
@@ -464,8 +460,14 @@ CRef Solver::propagate()
         Watcher        *i, *j, *end;
         num_props++;
 
-        learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
-        learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING, p);
+        // std::cout << "PRopagate " << (sign(p)?"-":"") << var(p)+1 << std::endl;
+
+        if (symmetry != nullptr) {
+            symmetry->updateNotify(p);
+            confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
+            if (confl != CRef_Undef)
+                return confl;
+        }
 
         for (i = j = (Watcher*)ws, end = i + ws.size();  i != end;){
             // Try to avoid inspecting the clause:
@@ -510,6 +512,10 @@ CRef Solver::propagate()
         }
         ws.shrink(i - j);
 
+        if (symmetry != nullptr && qhead == trail.size() && confl == CRef_Undef) { // Add a force lex leader
+            symmetry->propagateEnd();
+            learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
+        }
 
     }
     propagations += num_props;
@@ -765,7 +771,7 @@ lbool Solver::solve_()
     conflict.clear();
     if (!ok) return l_False;
 
-    // Set symmetry order
+       // Set symmetry order
     if (symmetry != nullptr) {
         symmetry->enableCosy(cosy::OrderMode::AUTO,
                              cosy::ValueMode::TRUE_LESS_FALSE);
@@ -779,7 +785,7 @@ lbool Solver::solve_()
             Lit l = literals[0];
 	    uncheckedEnqueue(l);
 	}
-    }
+        }
     solves++;
 
     max_learnts               = nClauses() * learntsize_factor;
@@ -948,7 +954,7 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
     if (symmetry != nullptr) {
         if (symmetry->hasClauseToInject(type, p)) {
             std::vector<Lit> vsbp = symmetry->clauseToInject(type, p);
@@ -958,9 +964,48 @@ void Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             for (Lit l : vsbp) {
                 sbp.push(l);
             }
+
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
             attachClause(cr);
+            return cr;
         }
     }
+    return CRef_Undef;
+}
+
+
+CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
+    if (symmetry != nullptr) {
+        if (symmetry->hasClauseToInject(type)) {
+            std::vector<Lit> vsbp = symmetry->clauseToInject(type);
+
+            // Dirty make a copy of vector
+            unsigned int lvl = level(var(vsbp[0]));
+            unsigned int i = 0;
+            unsigned int greatestDecisionLevel = 1;
+
+            vec<Lit> sbp;
+            for (Lit l : vsbp) {
+                if (i > 1 && level(var(l)) > lvl) {
+                    lvl = level(var(l));
+                    greatestDecisionLevel = i;
+                }
+                // printf("%s%d ",(sign(l)?"-":""), var(l)+1);
+                sbp.push(l);
+                i++;
+            }
+            if (greatestDecisionLevel != 1)
+                std::swap(sbp[1], sbp[greatestDecisionLevel]);
+
+            CRef cr = ca.alloc(sbp, true);
+            assert(value(sbp[0]) == l_Undef);
+            learnts.push(cr);
+            attachClause(cr);
+            uncheckedEnqueue(sbp[0], cr);
+
+            return cr;
+        }
+    }
+    return CRef_Undef;
 }

@@ -38,33 +38,50 @@ void CosyManager::generateUnits(ClauseInjector *injector) {
         status->generateUnitClauseOnInverting(injector);
 }
 
+void CosyManager::generateStaticESBPs(ClauseInjector *injector) {
+    for (const std::unique_ptr<CosyStatus>& status : _statuses)
+        status->generateStaticESBP(injector);
+}
+
+void CosyManager::searchAssertiveClause(ClauseInjector *injector) {
+    for (const std::unique_ptr<CosyStatus>& status : _statuses) {
+        if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
+            status->generateForceLexLeaderESBP(injector);
+            break;
+        }
+    }
+}
+
 void CosyManager::updateNotify(const Literal& literal,
                                ClauseInjector *injector) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.notify_time);
-        });
+    IF_STATS_ENABLED
+        (
+         ScopedTimeDistributionUpdater time(&_stats.total_time);
+         time.alsoUpdate(&_stats.notify_time);
+         );
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
 
-        status->updateNotify(literal);
+        if (status->state() == ACTIVE || status->state() == FORCE_LEX_LEADER)
+            status->updateNotify(literal);
 
         if (FLAGS_esbp && status->state() == REDUCER) {
             status->generateESBP(literal.variable(), injector);
+            // LOG(INFO) << index << " generate esbp";
+            // LOG(INFO) << status->debugString();
             break;
-        } else if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
-            status->generateForceLexLeaderESBP(literal.variable(), injector);
         }
     }
 }
 
 void CosyManager::updateCancel(const Literal& literal) {
-    IF_STATS_ENABLED({
-            ScopedTimeDistributionUpdater time(&_stats.total_time);
-            time.alsoUpdate(&_stats.cancel_time);
-        });
+    IF_STATS_ENABLED
+        (
+         ScopedTimeDistributionUpdater time(&_stats.total_time);
+         time.alsoUpdate(&_stats.cancel_time);
+         );
 
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {

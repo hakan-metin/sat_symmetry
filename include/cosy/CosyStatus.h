@@ -39,8 +39,8 @@ class CosyStatus {
 
     void generateUnitClauseOnInverting(ClauseInjector *injector);
     void generateESBP(BooleanVariable reason, ClauseInjector *injector);
-    void generateForceLexLeaderESBP(BooleanVariable reason,
-                                    ClauseInjector *injector);
+    void generateStaticESBP(ClauseInjector *injector);
+    void generateForceLexLeaderESBP(ClauseInjector *injector);
 
     std::string debugString() const;
 
@@ -60,7 +60,9 @@ class CosyStatus {
     };
     std::deque<LookupInfo> _lookup_infos;
     CosyState _state;
+    bool _generated;
 
+    void updateStatic();
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }
     void updateState();
 

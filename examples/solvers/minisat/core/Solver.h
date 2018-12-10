@@ -74,7 +74,8 @@ public:
 
     // Symmetry
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
-    void learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
+    CRef learntSymmetryClause(cosy::ClauseInjector::Type type);
 
     // Convenience versions of 'toDimacs()':
     void    toDimacs     (const char* file);
@@ -145,6 +146,8 @@ public:
     //
     uint64_t solves, starts, decisions, rnd_decisions, propagations, conflicts;
     uint64_t dec_vars, clauses_literals, learnts_literals, max_literals, tot_literals;
+
+    void     uncheckedEnqueue (Lit p, CRef from = CRef_Undef);                         // Enqueue a literal. Assumes value of literal is undefined.
 
 protected:
 
@@ -223,7 +226,7 @@ protected:
     void     insertVarOrder   (Var x);                                                 // Insert a variable in the decision order priority queue.
     Lit      pickBranchLit    ();                                                      // Return the next decision variable.
     void     newDecisionLevel ();                                                      // Begins a new decision level.
-    void     uncheckedEnqueue (Lit p, CRef from = CRef_Undef);                         // Enqueue a literal. Assumes value of literal is undefined.
+    //    void     uncheckedEnqueue (Lit p, CRef from = CRef_Undef);                         // Enqueue a literal. Assumes value of literal is undefined.
     bool     enqueue          (Lit p, CRef from = CRef_Undef);                         // Test if fact 'p' contradicts current state, enqueue otherwise.
     CRef     propagate        ();                                                      // Perform unit propagation. Returns possibly conflicting clause.
     void     cancelUntil      (int level);                                             // Backtrack until a certain level.

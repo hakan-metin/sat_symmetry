@@ -21,6 +21,9 @@ class CosyManager {
 
     void defineOrder(std::unique_ptr<Order>&& order);
 
+    void generateStaticESBPs(ClauseInjector *injector);
+
+    void searchAssertiveClause(ClauseInjector *injector);
     void generateUnits(ClauseInjector *injector);
     void updateNotify(const Literal& literal, ClauseInjector *injector);
     void updateCancel(const Literal& literal);

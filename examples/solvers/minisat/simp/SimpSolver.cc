@@ -21,6 +21,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "mtl/Sort.h"
 #include "simp/SimpSolver.h"
 #include "utils/System.h"
+#include "cosy/Printer.h"
+
 
 using namespace Minisat;
 
@@ -149,7 +151,7 @@ bool SimpSolver::addClause_(vec<Lit>& ps)
 
     if (use_simplification && clauses.size() == nclauses + 1){
         CRef          cr = clauses.last();
-        const Clause& c  = ca[cr];
+        // const Clause& c  = ca[cr];
 
         // NOTE: the clause is added to the queue immediately and then
         // again during 'gatherTouchedClauses()'. If nothing happens
@@ -157,20 +159,36 @@ bool SimpSolver::addClause_(vec<Lit>& ps)
         // be checked twice unnecessarily. This is an unfortunate
         // consequence of how backward subsumption is used to mimic
         // forward subsumption.
-        subsumption_queue.insert(cr);
-        for (int i = 0; i < c.size(); i++){
-            occurs[var(c[i])].push(cr);
-            n_occ[toInt(c[i])]++;
-            touched[var(c[i])] = 1;
-            n_touched++;
-            if (elim_heap.inHeap(var(c[i])))
-                elim_heap.increase(var(c[i]));
-        }
+        addClauseToSubsume(cr);
     }
 
     return true;
 }
 
+void SimpSolver::addSBP(const std::vector<Lit> literals) {
+    vec<Lit> lits;
+    for (Lit lit : literals)
+        lits.push(lit);
+
+    CRef cr = ca.alloc(lits, false);
+    clauses.push(cr);
+    attachClause(cr);
+    addClauseToSubsume(cr);
+}
+
+void SimpSolver::addClauseToSubsume(CRef cr) {
+    const Clause& c  = ca[cr];
+
+    subsumption_queue.insert(cr);
+    for (int i = 0; i < c.size(); i++){
+        occurs[var(c[i])].push(cr);
+        n_occ[toInt(c[i])]++;
+        touched[var(c[i])] = 1;
+        n_touched++;
+        if (elim_heap.inHeap(var(c[i])))
+            elim_heap.increase(var(c[i]));
+    }
+}
 
 void SimpSolver::removeClause(CRef cr)
 {
@@ -488,7 +506,7 @@ bool SimpSolver::eliminateVar(Var v)
 
     for (int i = 0; i < pos.size(); i++)
         for (int j = 0; j < neg.size(); j++)
-            if (merge(ca[pos[i]], ca[neg[j]], v, clause_size) && 
+            if (merge(ca[pos[i]], ca[neg[j]], v, clause_size) &&
                 (++cnt > cls.size() + grow || (clause_lim != -1 && clause_size > clause_lim)))
                 return true;
 
@@ -508,7 +526,7 @@ bool SimpSolver::eliminateVar(Var v)
     }
 
     for (int i = 0; i < cls.size(); i++)
-        removeClause(cls[i]); 
+        removeClause(cls[i]);
 
     // Produce clauses in cross product:
     vec<Lit>& resolvent = add_tmp;
@@ -519,7 +537,7 @@ bool SimpSolver::eliminateVar(Var v)
 
     // Free occurs list for this variable:
     occurs[v].clear(true);
-    
+
     // Free watchers lists for this variable, if possible:
     if (watches[ mkLit(v)].size() == 0) watches[ mkLit(v)].clear(true);
     if (watches[~mkLit(v)].size() == 0) watches[~mkLit(v)].clear(true);
@@ -539,7 +557,7 @@ bool SimpSolver::substitute(Var v, Lit x)
     eliminated[v] = true;
     setDecisionVar(v, false);
     const vec<CRef>& cls = occurs.lookup(v);
-    
+
     vec<Lit>& subst_clause = add_tmp;
     for (int i = 0; i < cls.size(); i++){
         Clause& c = ca[cls[i]];
@@ -584,13 +602,14 @@ bool SimpSolver::eliminate(bool turn_off_elim)
     else if (!use_simplification)
         return true;
 
+    int trail_sz = trail.size();
     // Main simplification loop:
     //
     while (n_touched > 0 || bwdsub_assigns < trail.size() || elim_heap.size() > 0){
 
         gatherTouchedClauses();
         // printf("  ## (time = %6.2f s) BWD-SUB: queue = %d, trail = %d\n", cpuTime(), subsumption_queue.size(), trail.size() - bwdsub_assigns);
-        if ((subsumption_queue.size() > 0 || bwdsub_assigns < trail.size()) && 
+        if ((subsumption_queue.size() > 0 || bwdsub_assigns < trail.size()) &&
             !backwardSubsumptionCheck(true)){
             ok = false; goto cleanup; }
 
@@ -605,7 +624,7 @@ bool SimpSolver::eliminate(bool turn_off_elim)
         // printf("  ## (time = %6.2f s) ELIM: vars = %d\n", cpuTime(), elim_heap.size());
         for (int cnt = 0; !elim_heap.empty(); cnt++){
             Var elim = elim_heap.removeMin();
-            
+
             if (asynch_interrupt) break;
 
             if (isEliminated(elim) || value(elim) != l_Undef) continue;
@@ -631,7 +650,9 @@ bool SimpSolver::eliminate(bool turn_off_elim)
 
         assert(subsumption_queue.size() == 0);
     }
+
  cleanup:
+    std::cout << "c Simplifier add " <<  (trail.size() - trail_sz) << " units" << std::endl;
 
     // If no more simplification is needed, free all simplification-related data structures:
     if (turn_off_elim){
@@ -655,7 +676,7 @@ bool SimpSolver::eliminate(bool turn_off_elim)
     }
 
     if (verbosity >= 1 && elimclauses.size() > 0)
-        printf("|  Eliminated clauses:     %10.2f Mb                                      |\n", 
+        printf("|  Eliminated clauses:     %10.2f Mb                                      |\n",
                double(elimclauses.size() * sizeof(uint32_t)) / (1024*1024));
 
     return ok;
@@ -704,14 +725,14 @@ void SimpSolver::garbageCollect()
 {
     // Initialize the next region to a size corresponding to the estimated utilization degree. This
     // is not precise but should avoid some unnecessary reallocations for the new region:
-    ClauseAllocator to(ca.size() - ca.wasted()); 
+    ClauseAllocator to(ca.size() - ca.wasted());
 
     cleanUpClauses();
     to.extra_clause_field = ca.extra_clause_field; // NOTE: this is important to keep (or lose) the extra fields.
     relocAll(to);
     Solver::relocAll(to);
     if (verbosity >= 2)
-        printf("|  Garbage collection:   %12d bytes => %12d bytes             |\n", 
+        printf("|  Garbage collection:   %12d bytes => %12d bytes             |\n",
                ca.size()*ClauseAllocator::Unit_Size, to.size()*ClauseAllocator::Unit_Size);
     to.moveTo(ca);
 }
