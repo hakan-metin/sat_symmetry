@@ -968,8 +968,8 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             }
 
             CRef cr = ca.alloc(sbp, true);
-            learnts.push(cr);
-            attachClause(cr);
+            // learnts.push(cr);
+            // attachClause(cr);
             return cr;
         }
     }
@@ -1032,6 +1032,9 @@ CRef Solver::learntSP() {
             } else {
                 assert(reason_ref != CRef_Undef);
                 const Clause& clause = ca[reason_ref];
+                if (clause.learnt())
+                    return CRef_Undef;
+
                 for (int i=0; i<clause.size(); i++)
                     src.push_back(clause[i]);
             }

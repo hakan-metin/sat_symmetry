@@ -104,8 +104,7 @@ void CosyStatus::updateCancelSP(const Literal& literal) {
         return;
 
     _desactivesp = kNoLiteralIndex;
-    CHECK_GT(_fals.size(), 0);
-    if (_fals.back() != literal)
+    if (_fals.empty() || _fals.back() != literal)
         return;
 
     _fals.pop_back();

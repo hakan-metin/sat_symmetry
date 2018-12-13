@@ -4,7 +4,7 @@
 
 namespace cosy {
 
-static const bool FLAGS_esbp = false;
+static const bool FLAGS_esbp = true;
 static const bool FLAGS_esbp_forcing = false;
 static const bool FLAGS_sp = true;
 
