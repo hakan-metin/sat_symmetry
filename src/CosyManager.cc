@@ -4,13 +4,15 @@
 
 namespace cosy {
 
-static const bool FLAGS_esbp = true;
+static const bool FLAGS_esbp = false;
 static const bool FLAGS_esbp_forcing = false;
+static const bool FLAGS_sp = true;
 
 CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
     _group(group),
     _assignment(assignment),
-    _order(nullptr) {
+    _order(nullptr),
+    _last_status(nullptr) {
 }
 
 CosyManager::~CosyManager() {
@@ -45,6 +47,13 @@ void CosyManager::generateStaticESBPs(ClauseInjector *injector) {
 
 void CosyManager::searchAssertiveClause(ClauseInjector *injector) {
     for (const std::unique_ptr<CosyStatus>& status : _statuses) {
+        if (status->state() != INACTIVE && status->stateSP() == SP_ACTIVE) {
+            if (status->registerSP(injector)) {
+                _last_status = status.get();
+                break;
+            }
+        }
+
         if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
             status->generateForceLexLeaderESBP(injector);
             break;
@@ -52,8 +61,15 @@ void CosyManager::searchAssertiveClause(ClauseInjector *injector) {
     }
 }
 
-void CosyManager::updateNotify(const Literal& literal,
-                               ClauseInjector *injector) {
+void CosyManager::computeSymmetricalClause(const std::vector<Literal> &src,
+                                           std::vector<Literal> *dst) {
+    CHECK_NE(_last_status, nullptr);
+    _last_status->computeSymmetricalClause(src, dst);
+    _last_status = nullptr;
+}
+
+
+void CosyManager::updateNotify(const Literal& literal, ClauseInjector *injector) {
     IF_STATS_ENABLED
         (
          ScopedTimeDistributionUpdater time(&_stats.total_time);
@@ -63,9 +79,14 @@ void CosyManager::updateNotify(const Literal& literal,
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
+        if (status->state() == INACTIVE)
+            continue;
 
-        if (status->state() == ACTIVE || status->state() == FORCE_LEX_LEADER)
+        if (FLAGS_esbp)
             status->updateNotify(literal);
+
+        if (FLAGS_sp && status->stateSP() != SP_INACTIVE)
+            status->updateNotifySP(literal);
 
         if (FLAGS_esbp && status->state() == REDUCER) {
             status->generateESBP(literal.variable(), injector);
@@ -88,6 +109,7 @@ void CosyManager::updateCancel(const Literal& literal) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
 
         status->updateCancel(literal);
+        status->updateCancelSP(literal);
     }
 }
 

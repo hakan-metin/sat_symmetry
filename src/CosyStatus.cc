@@ -11,7 +11,10 @@ CosyStatus::CosyStatus(const Permutation &permutation, const Order &order,
     _assignment(assignment),
     _lookup_index(0),
     _state(ACTIVE),
-    _generated(false) {
+    _generated(false),
+    _statesp(SP_REQUIRE),
+    _countersp(0),
+    _desactivesp(kNoLiteralIndex) {
 }
 
 CosyStatus::~CosyStatus() {
@@ -39,6 +42,126 @@ void CosyStatus::generateUnitClauseOnInverting(ClauseInjector *injector) {
     injector->addClause(ClauseInjector::Type::UNITS, kNoBooleanVariable,
                         std::move(literals));
 }
+
+
+void CosyStatus::updateNotifySP(const Literal& literal) {
+    DCHECK_NE(_statesp, SP_INACTIVE);
+
+    const Literal inverse = _permutation.inverseOf(literal);
+    const Literal image = _permutation.imageOf(literal);
+
+    _fals.push_back(literal);
+
+    if (_assignment.isDecision(literal)) {
+        if (!_assignment.literalIsAssigned(image)) {
+            _countersp++;
+        } else if (_assignment.literalIsFalse(image)) {
+            _desactivesp = literal.index();
+            _statesp = SP_INACTIVE;
+            return;
+        }
+    }
+
+    // else {
+    //     // can be simplified as !_assignment.literalIsTrue(inverse)
+    //     if (!_assignment.literalIsAssigned(inverse)) {
+    //         _fals.push_back(literal);
+    //     } else if (_assignment.literalIsFalse(inverse)) {
+    //         _fals.push_back(literal);  // SP conflict
+    //     }
+    // }
+
+
+    if (_assignment.isDecision(inverse)) {
+        if (_assignment.literalIsTrue(inverse)) {
+            _countersp--;
+        } else {
+            DCHECK(_assignment.literalIsFalse(inverse));
+            _desactivesp = literal.index();
+            _statesp = SP_INACTIVE;
+            return;
+        }
+    }
+    // else {
+    //     while (_fals.size() > 0) {
+    //         Literal fal = _fals.front();
+    //         Literal img = _permutation.imageOf(fal);
+    //         if (_assignment.literalIsTrue(img))
+    //             _fals.pop_front();
+    //         break;
+    //     }
+    // }
+
+    if (_countersp == 0)
+        _statesp = SP_ACTIVE;
+    else
+        _statesp = SP_REQUIRE;
+
+}
+
+void CosyStatus::updateCancelSP(const Literal& literal) {
+    if (_statesp == SP_INACTIVE && literal.index() != _desactivesp)
+        return;
+
+    _desactivesp = kNoLiteralIndex;
+    CHECK_GT(_fals.size(), 0);
+    if (_fals.back() != literal)
+        return;
+
+    _fals.pop_back();
+
+    // // // update FAL
+    // if (_fals.size() > 0) {
+    //     Literal back = _fals.back();
+    //     if (literal == back)
+    //         _fals.pop_back();
+    // }
+
+    const Literal inverse = _permutation.inverseOf(literal);
+    const Literal image = _permutation.imageOf(literal);
+
+    if (_assignment.isDecision(literal) && !_assignment.literalIsAssigned(image))
+        _countersp--;
+    if (_assignment.isDecision(inverse) && _assignment.literalIsTrue(inverse))
+        _countersp++;
+
+
+    if (_countersp == 0)
+        _statesp = SP_ACTIVE;
+    else
+        _statesp = SP_REQUIRE;
+}
+
+bool CosyStatus::registerSP(ClauseInjector *injector) {
+    unsigned int i = 0;
+
+    while (i < _fals.size() &&
+           (_assignment.isDecision(_fals[i]) ||
+            _assignment.literalIsTrue(_permutation.imageOf(_fals[i]))))
+        i++;
+
+    if (i == _fals.size()) {
+        _statesp = SP_REQUIRE;
+        return false;
+    }
+
+    std::vector<Literal> propagate_literal = { _fals[i] };
+    injector->addClause(ClauseInjector::Type::SP, kNoBooleanVariable,
+                        std::move(propagate_literal));
+    return true;
+}
+
+
+void CosyStatus::computeSymmetricalClause(const std::vector<Literal> &src,
+                                          std::vector<Literal> *dst) {
+    for (const Literal& l : src) {
+        if (_permutation.isTrivialImage(l))
+            dst->push_back(l);
+        else
+            dst->push_back(_permutation.imageOf(l));
+    }
+}
+
 
 void CosyStatus::updateNotify(const Literal& literal) {
     unsigned int initial = _lookup_index;
@@ -70,6 +193,8 @@ void CosyStatus::updateCancel(const Literal& literal) {
     _lookup_index = lookup.back_index;
     _lookup_infos.pop_back();
 }
+
+
 
 void CosyStatus::updateState() {
     Literal element, inverse;

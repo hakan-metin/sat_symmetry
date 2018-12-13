@@ -19,7 +19,7 @@ class Assignment {
     ~Assignment() {}
 
     void resize(unsigned int num_variables);
-    void assignFromTrueLiteral(Literal literal);
+    void assignFromTrueLiteral(Literal literal, bool isDecision);
     void unassignLiteral(Literal literal);
 
     bool literalIsTrue(Literal literal) const;
@@ -33,29 +33,35 @@ class Assignment {
     Literal getTrueLiteralForAssignedVariable(BooleanVariable var) const;
     Literal getFalseLiteralForAssignedVariable(BooleanVariable var) const;
 
+    bool isDecision(Literal literal) const;
+
     std::string debugStringValue(Literal x) const;
 
     unsigned int numberOfVariables() const;
 
  private:
     Bitset64<LiteralIndex> _assignment;
+    Bitset64<BooleanVariable> _decisions;
 
     DISALLOW_COPY_AND_ASSIGN(Assignment);
 };
 
 inline void Assignment::resize(unsigned int num_variables) {
     _assignment.Resize(LiteralIndex(num_variables << 1));
+    _decisions.Resize(BooleanVariable(num_variables));
 }
 
 inline
-void Assignment::assignFromTrueLiteral(Literal literal) {
+void Assignment::assignFromTrueLiteral(Literal literal, bool isDecision) {
     DCHECK(!variableIsAssigned(literal.variable()));
     _assignment.Set(literal.index());
+    _decisions.Set(literal.variable(), isDecision);
 }
 
 inline void Assignment::unassignLiteral(Literal literal) {
     DCHECK(variableIsAssigned(literal.variable()));
     _assignment.ClearTwoBits(literal.index());
+    _decisions.Clear(literal.variable());
 }
 
 inline bool Assignment::literalIsTrue(Literal literal) const {
@@ -94,6 +100,10 @@ inline Literal
 Assignment::getFalseLiteralForAssignedVariable(BooleanVariable var) const {
     DCHECK(variableIsAssigned(var));
     return Literal(var, !_assignment.IsSet(LiteralIndex(var.value() << 1)));
+}
+
+inline bool Assignment::isDecision(Literal literal) const {
+    return _decisions.IsSet(literal.variable());
 }
 
 inline std::string Assignment::debugStringValue(Literal x) const {

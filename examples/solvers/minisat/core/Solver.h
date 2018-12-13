@@ -22,6 +22,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #define Minisat_Solver_h
 
 #include <memory>
+#include <algorithm>
 
 #include "mtl/Vec.h"
 #include "mtl/Heap.h"
@@ -76,6 +77,9 @@ public:
     std::unique_ptr<cosy::SymmetryController<Lit>> symmetry;
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p);
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type);
+    CRef learntSP();
+    void sortSymClause(std::vector<Lit> &in, vec<Lit>& sp);
+
 
     // Convenience versions of 'toDimacs()':
     void    toDimacs     (const char* file);
@@ -175,6 +179,46 @@ protected:
         const vec<double>&  activity;
         bool operator () (Var x, Var y) const { return activity[x] > activity[y]; }
         VarOrderLt(const vec<double>&  act) : activity(act) { }
+    };
+
+    /* struct SymLevelLt { */
+    /*     const vec<VarData>&  vardata; */
+    /*     bool operator () (Lit x, Lit y) const { */
+    /*         const Var u = var(x); */
+    /*         const Var v = var(y); */
+    /*         if (vardata[u].level == vardata[v].level) */
+    /*             return x < y; */
+    /*         return vardata[u].level > vardata[v].level; */
+    /*     } */
+    /*  SymLevelLt(const vec<VarData>& vd) : vardata(vd) { } */
+    /* }; */
+
+    /* struct SymValueLt { */
+    /*     const vec<lbool>& assigns; */
+    /*     bool operator () (Lit x, Lit y) const { */
+    /*         const Var u = var(x); */
+    /*         const Var v = var(y); */
+    /*         const lbool a = assigns[u]; */
+    /*         const lbool b = assigns[v]; */
+    /*         return a == l_Undef; */
+    /*     } */
+    /*  SymValueLt(const vec<lbool> & a) :  assigns(a) { } */
+    /* }; */
+
+
+    struct SymLt {
+        const vec<VarData>&  vardata;
+        const vec<lbool>& assigns;
+        bool operator () (Lit x, Lit y) const {
+            const Var u = var(x);
+            const Var v = var(y);
+            const lbool a = assigns[u] ^ sign(x);
+            const lbool b = assigns[v] ^ sign(y);
+            if (a != b)
+                return toInt(b) < toInt(a);
+            return vardata[u].level > vardata[v].level;
+        }
+     SymLt(const vec<VarData>& vd, const vec<lbool> & a) : vardata(vd), assigns(a) { }
     };
 
     // Solver state:

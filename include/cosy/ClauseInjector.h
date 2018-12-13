@@ -61,6 +61,7 @@ class ClauseInjector {
         UNITS,
         ESBP,
         ESBP_FORCING,
+        SP,
         NR_TYPES
     };
 
@@ -85,11 +86,14 @@ class ClauseInjector {
         Stats() : StatsGroup("Clause Injector"),
                   units("Number of Units", this),
                   esbp("Number of ESBP", this),
-                  esbp_forcing("Number of ESBP Forcing", this) {}
+                  esbp_forcing("Number of ESBP Forcing", this),
+                  sp("Number of symmetry propagation", this) {}
 
         CounterStat units;
         CounterStat esbp;
         CounterStat esbp_forcing;
+        CounterStat sp;
+
     };
     Stats _stats;
 

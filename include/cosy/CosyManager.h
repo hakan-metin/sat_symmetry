@@ -28,6 +28,10 @@ class CosyManager {
     void updateNotify(const Literal& literal, ClauseInjector *injector);
     void updateCancel(const Literal& literal);
 
+
+    void computeSymmetricalClause(const std::vector<Literal> &src,
+                                  std::vector<Literal> *dst);
+
     void summarize() const;
     void printStats() const { _stats.print(); }
 
@@ -37,6 +41,7 @@ class CosyManager {
     std::unique_ptr<Order> _order;
 
     std::vector< std::unique_ptr<CosyStatus> > _statuses;
+    CosyStatus *_last_status;
 
     struct Stats : public StatsGroup {
         Stats() : StatsGroup("Cosy Manager"),

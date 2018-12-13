@@ -31,6 +31,8 @@ ClauseInjector::getClause(Type type, BooleanVariable cause) {
     case UNITS:        _stats.units.increment();           break;
     case ESBP:         _stats.esbp.increment();            break;
     case ESBP_FORCING: _stats.esbp_forcing.increment();    break;
+    case SP:           _stats.sp.increment();              break;
+
     default: CHECK_NOTNULL(nullptr);
     }
     return _injectors[type].getClause(cause);

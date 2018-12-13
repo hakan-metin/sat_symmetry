@@ -2,7 +2,7 @@
 EXAMPLES := examples/
 
 examples: default $(BIN)CNFBlissSymmetries $(BIN)CNFSaucySymmetries
-solvers: $(BIN)maple_scavel
+solvers: $(BIN)minisat
 # $(BIN)minisatsimp
 
 $(call REQUIRE-DIR, $(BIN)CNFBlissSymmetries)

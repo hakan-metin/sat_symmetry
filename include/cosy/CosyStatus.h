@@ -24,23 +24,42 @@ enum CosyState {
     FORCE_LEX_LEADER,
 };
 
+enum StateSP {
+    SP_ACTIVE,
+    SP_INACTIVE,
+    SP_REQUIRE,
+};
+
 class CosyStatus {
  public:
     CosyStatus(const Permutation &permutation, const Order &order,
                const Assignment& assignment);
     ~CosyStatus();
 
+    // ESBP
+
     void addLookupLiteral(const Literal& literal);
 
     void updateNotify(const Literal& literal);
     void updateCancel(const Literal& literal);
-
     CosyState state() const { return _state; }
 
     void generateUnitClauseOnInverting(ClauseInjector *injector);
     void generateESBP(BooleanVariable reason, ClauseInjector *injector);
     void generateStaticESBP(ClauseInjector *injector);
     void generateForceLexLeaderESBP(ClauseInjector *injector);
+
+
+    // SP
+
+    void updateNotifySP(const Literal& literal);
+    void updateCancelSP(const Literal& literal);
+    bool registerSP(ClauseInjector *injector);
+    void computeSymmetricalClause(const std::vector<Literal> &src,
+                                  std::vector<Literal> *dst);
+
+
+    StateSP stateSP() const { return _statesp; }
 
     std::string debugString() const;
 
@@ -58,9 +77,17 @@ class CosyStatus {
         BooleanVariable variable;
         unsigned int back_index;
     };
+
     std::deque<LookupInfo> _lookup_infos;
     CosyState _state;
     bool _generated;
+
+    // SP
+    StateSP _statesp;
+    unsigned int _countersp;
+    std::deque<Literal> _fals;  // first asymmetric literals
+    LiteralIndex _desactivesp;
+
 
     void updateStatic();
     bool isLookupEnd() const { return _lookup_index >= _lookup_order.size(); }

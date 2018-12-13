@@ -39,7 +39,7 @@ class SymmetryController {
     void enableCosy(OrderMode vars, ValueMode value);
 
     void generateStaticESBP();
-    void updateNotify(T literal_s);
+    void updateNotify(T literal_s, bool isDecision);
     void updateCancel(T literal_s);
 
     void propagateEnd();
@@ -49,6 +49,8 @@ class SymmetryController {
 
     bool hasClauseToInject(ClauseInjector::Type type) const;
     std::vector<T> clauseToInject(ClauseInjector::Type type);
+
+    void performSymmetricalClause(const std::vector<T> &in, std::vector<T>*out);
 
     void printInfo() const;
     void printStats() const;
@@ -64,7 +66,8 @@ class SymmetryController {
     std::unique_ptr<SymmetryFinder> _symmetry_finder;
 
     bool loadCNFProblem(const std::string cnf_filename);
-    std::vector<T> adaptVector(const std::vector<Literal>& literals);
+    std::vector<T> adaptVectorFrom(const std::vector<Literal>& literals);
+    std::vector<Literal> adaptVectorTo(const std::vector<T>& literals);
 };
 
 // Implementation
@@ -146,9 +149,9 @@ inline void SymmetryController<T>::enableCosy(OrderMode vars, ValueMode value) {
 }
 
 template<class T>
-inline void SymmetryController<T>::updateNotify(T literal_s) {
+inline void SymmetryController<T>::updateNotify(T literal_s, bool isDecision) {
     cosy::Literal literal_c = _literal_adapter->convertTo(literal_s);
-    _assignment.assignFromTrueLiteral(literal_c);
+    _assignment.assignFromTrueLiteral(literal_c, isDecision);
     if (_cosy_manager)
         _cosy_manager->updateNotify(literal_c, &_injector);
 }
@@ -160,12 +163,12 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
     if (!_assignment.literalIsAssigned(literal_c))
         return;
 
-    _assignment.unassignLiteral(literal_c);
-
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _injector.removeClause(kNoBooleanVariable);
+    _assignment.unassignLiteral(literal_c);
+
+    // _injector.removeClause(kNoBooleanVariable);
 }
 
 
@@ -193,7 +196,7 @@ SymmetryController<T>::clauseToInject(ClauseInjector::Type type, T literal_s) {
     // for (cosy::Literal lit: literals_c)
     //     std::cout << lit.signedValue() << " ";
     // std::cout << std::endl;
-    std::vector<T> literals_s = adaptVector(literals_c);
+    std::vector<T> literals_s = adaptVectorFrom(literals_c);
     return literals_s;
 }
 
@@ -206,19 +209,46 @@ template<class T> inline std::vector<T>
 SymmetryController<T>::clauseToInject(ClauseInjector::Type type) {
     std::vector<cosy::Literal> literals_c =
         std::move(_injector.getClause(type, kNoBooleanVariable));
-    std::vector<T> literals_s = adaptVector(literals_c);
+    std::vector<T> literals_s = adaptVectorFrom(literals_c);
     return literals_s;
 }
 
 
+
+template<class T> inline void
+SymmetryController<T>::performSymmetricalClause(const std::vector<T> &in,
+                                                std::vector<T>*out) {
+    std::vector<Literal> src = adaptVectorTo(in);
+    std::vector<Literal> dst;
+
+    _cosy_manager->computeSymmetricalClause(src, &dst);
+
+    out->clear();
+    for (const Literal l : dst)
+        out->push_back(_literal_adapter->convertFrom(l));
+
+}
+
+
 template<class T> inline std::vector<T>
-SymmetryController<T>::adaptVector(const std::vector<Literal>& literals) {
+SymmetryController<T>::adaptVectorFrom(const std::vector<Literal>& literals) {
     std::vector<T> adapted;
     for (const Literal& literal : literals)
         adapted.push_back(_literal_adapter->convertFrom(literal));
 
     return std::move(adapted);
 }
+
+template<class T> inline std::vector<Literal>
+SymmetryController<T>::adaptVectorTo(const std::vector<T>& literals) {
+    std::vector<Literal> adapted;
+    for (const T& literal : literals)
+        adapted.push_back(_literal_adapter->convertTo(literal));
+
+    return std::move(adapted);
+}
+
+
 
 template<class T> inline void
 SymmetryController<T>::printStats() const {
