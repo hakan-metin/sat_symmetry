@@ -163,12 +163,13 @@ inline void SymmetryController<T>::updateCancel(T literal_s) {
     if (!_assignment.literalIsAssigned(literal_c))
         return;
 
+    _assignment.unassignLiteral(literal_c);
+
     if (_cosy_manager)
         _cosy_manager->updateCancel(literal_c);
 
-    _assignment.unassignLiteral(literal_c);
 
-    // _injector.removeClause(kNoBooleanVariable);
+    _injector.removeClause(kNoBooleanVariable);
 }
 
 

@@ -79,7 +79,7 @@ public:
     CRef learntSymmetryClause(cosy::ClauseInjector::Type type);
     CRef learntSP();
     void sortSymClause(std::vector<Lit> &in, vec<Lit>& sp);
-
+    bool isESBP;
 
     // Convenience versions of 'toDimacs()':
     void    toDimacs     (const char* file);

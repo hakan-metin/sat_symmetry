@@ -52,7 +52,8 @@ Solver::Solver() :
 
     // Parameters (user settable):
     //
-    verbosity        (0)
+    isESBP(false)
+  ,  verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)
   , random_var_freq  (opt_random_var_freq)
@@ -463,7 +464,7 @@ CRef Solver::propagate()
         // std::cout << "PRopagate " << (sign(p)?"-":"") << var(p)+1 << std::endl;
 
         if (symmetry != nullptr) {
-            symmetry->updateNotify(p, reason(var(p)) == CRef_Undef && level(var(p)) > 0);
+            symmetry->updateNotify(p, reason(var(p)) == CRef_Undef);  //&& level(var(p)) > 0
             confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
             if (confl != CRef_Undef)
                 return confl;
@@ -515,8 +516,9 @@ CRef Solver::propagate()
 
         if (symmetry != nullptr && qhead == trail.size() && confl == CRef_Undef) { // Add a force lex leader
             symmetry->propagateEnd();
-            confl = learntSP();
-            learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
+            // confl = learntSP();
+            // if (qhead == trail.size() && confl == CRef_Undef)
+                learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
         }
 
     }
@@ -650,6 +652,8 @@ lbool Solver::search(int nof_conflicts)
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
+                if (isESBP)
+                    std::cout << var(learnt_clause[0])+1 << " is ESBP UNIT" << std::endl;
                 uncheckedEnqueue(learnt_clause[0]);
             }else{
                 CRef cr = ca.alloc(learnt_clause, true);
@@ -658,6 +662,8 @@ lbool Solver::search(int nof_conflicts)
                 claBumpActivity(ca[cr]);
                 uncheckedEnqueue(learnt_clause[0], cr);
             }
+
+            isESBP = false;
 
             varDecayActivity();
             claDecayActivity();
@@ -968,8 +974,9 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
             }
 
             CRef cr = ca.alloc(sbp, true);
-            // learnts.push(cr);
-            // attachClause(cr);
+            learnts.push(cr);
+            attachClause(cr);
+            isESBP = true;
             return cr;
         }
     }
@@ -983,22 +990,10 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type) {
             std::vector<Lit> vsbp = symmetry->clauseToInject(type);
 
             // Dirty make a copy of vector
-            int lvl = level(var(vsbp[0]));
-            unsigned int i = 0;
-            unsigned int greatestDecisionLevel = 1;
 
             vec<Lit> sbp;
-            for (Lit l : vsbp) {
-                if (i > 1 && level(var(l)) > lvl) {
-                    lvl = level(var(l));
-                    greatestDecisionLevel = i;
-                }
-                // printf("%s%d ",(sign(l)?"-":""), var(l)+1);
-                sbp.push(l);
-                i++;
-            }
-            if (greatestDecisionLevel != 1)
-                std::swap(sbp[1], sbp[greatestDecisionLevel]);
+            sortSymClause(vsbp, sbp);
+
 
             CRef cr = ca.alloc(sbp, true);
             assert(value(sbp[0]) == l_Undef);
@@ -1028,6 +1023,7 @@ CRef Solver::learntSP() {
 
             if (level(x) == 0) {
                 src.push_back(l);
+                std::cout << "SP use " << var(l)+1 << " AS PROP" << std::endl;
                 return CRef_Undef;
             } else {
                 assert(reason_ref != CRef_Undef);
