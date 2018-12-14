@@ -79,9 +79,6 @@ void CosyManager::updateNotify(const Literal& literal, ClauseInjector *injector)
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
-        if (status->state() == INACTIVE)
-            continue;
-
         if (FLAGS_esbp || FLAGS_esbp_forcing)
             status->updateNotify(literal);
 
