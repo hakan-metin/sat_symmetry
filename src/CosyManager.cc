@@ -6,7 +6,7 @@ namespace cosy {
 
 static const bool FLAGS_esbp = true;
 static const bool FLAGS_esbp_forcing = false;
-static const bool FLAGS_sp = false;
+static const bool FLAGS_sp = true;
 
 CosyManager::CosyManager(const Group& group, const Assignment& assignment) :
     _group(group),
@@ -47,12 +47,12 @@ void CosyManager::generateStaticESBPs(ClauseInjector *injector) {
 
 void CosyManager::searchAssertiveClause(ClauseInjector *injector) {
     for (const std::unique_ptr<CosyStatus>& status : _statuses) {
-        // if (status->state() != INACTIVE && status->stateSP() == SP_ACTIVE) {
-        //     if (status->registerSP(injector)) {
-        //         _last_status = status.get();
-        //         break;
-        //     }
-        // }
+        if (status->state() != INACTIVE && status->stateSP() == SP_ACTIVE) {
+            if (status->registerSP(injector)) {
+                _last_status = status.get();
+                break;
+            }
+        }
 
         if (FLAGS_esbp_forcing && status->state() == FORCE_LEX_LEADER) {
             status->generateForceLexLeaderESBP(injector);
@@ -79,10 +79,10 @@ void CosyManager::updateNotify(const Literal& literal, ClauseInjector *injector)
     const BooleanVariable variable = literal.variable();
     for (const unsigned int& index : _group.watch(variable)) {
         const std::unique_ptr<CosyStatus>& status = _statuses[index];
-        // if (status->state() == INACTIVE)
-        //     continue;
+        if (status->state() == INACTIVE)
+            continue;
 
-        // if (FLAGS_esbp)
+        if (FLAGS_esbp || FLAGS_esbp_forcing)
             status->updateNotify(literal);
 
         if (FLAGS_sp && status->stateSP() != SP_INACTIVE)

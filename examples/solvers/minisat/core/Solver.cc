@@ -52,8 +52,7 @@ Solver::Solver() :
 
     // Parameters (user settable):
     //
-    isESBP(false)
-  ,  verbosity        (0)
+    verbosity        (0)
   , var_decay        (opt_var_decay)
   , clause_decay     (opt_clause_decay)
   , random_var_freq  (opt_random_var_freq)
@@ -464,7 +463,7 @@ CRef Solver::propagate()
         // std::cout << "PRopagate " << (sign(p)?"-":"") << var(p)+1 << std::endl;
 
         if (symmetry != nullptr) {
-            symmetry->updateNotify(p, reason(var(p)) == CRef_Undef);  //&& level(var(p)) > 0
+            symmetry->updateNotify(p, reason(var(p)) == CRef_Undef); // || level(var(p)) == 0
             confl = learntSymmetryClause(cosy::ClauseInjector::ESBP, p);
             if (confl != CRef_Undef)
                 return confl;
@@ -506,9 +505,9 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-            }else
+            }else {
                 uncheckedEnqueue(first, cr);
-
+            }
         NextClause:;
         }
         ws.shrink(i - j);
@@ -516,8 +515,8 @@ CRef Solver::propagate()
 
         if (symmetry != nullptr && qhead == trail.size() && confl == CRef_Undef) { // Add a force lex leader
             symmetry->propagateEnd();
-            // confl = learntSP();
-            // if (qhead == trail.size() && confl == CRef_Undef)
+            confl = learntSP();
+            if (qhead == trail.size() && confl == CRef_Undef)
                 learntSymmetryClause(cosy::ClauseInjector::ESBP_FORCING);
         }
 
@@ -652,8 +651,6 @@ lbool Solver::search(int nof_conflicts)
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
-                if (isESBP)
-                    std::cout << var(learnt_clause[0])+1 << " is ESBP UNIT" << std::endl;
                 uncheckedEnqueue(learnt_clause[0]);
             }else{
                 CRef cr = ca.alloc(learnt_clause, true);
@@ -662,8 +659,6 @@ lbool Solver::search(int nof_conflicts)
                 claBumpActivity(ca[cr]);
                 uncheckedEnqueue(learnt_clause[0], cr);
             }
-
-            isESBP = false;
 
             varDecayActivity();
             claDecayActivity();
@@ -969,14 +964,25 @@ CRef Solver::learntSymmetryClause(cosy::ClauseInjector::Type type, Lit p) {
 
             // Dirty make a copy of vector
             vec<Lit> sbp;
+            int max_i = 0;
+            int lvl = level(var(vsbp[max_i]));
+
+            int i = 0;
             for (Lit l : vsbp) {
                 sbp.push(l);
+                if (i > 1 && level(var(l)) > lvl) {
+                    max_i = i;
+                    lvl = level(var(vsbp[max_i]));
+                }
+                i++;
             }
+            if (max_i != 0)
+                std::swap(sbp[0], sbp[max_i]);
 
             CRef cr = ca.alloc(sbp, true);
             learnts.push(cr);
             attachClause(cr);
-            isESBP = true;
+
             return cr;
         }
     }
@@ -1022,9 +1028,11 @@ CRef Solver::learntSP() {
             std::vector<Lit> dst;
 
             if (level(x) == 0) {
-                src.push_back(l);
-                std::cout << "SP use " << var(l)+1 << " AS PROP" << std::endl;
+                // if (forbid_units.find(x) != forbid_units.end())
                 return CRef_Undef;
+                src.push_back(l);
+                // std::cout << "SP use " << var(l)+1 << " AS PROP" << std::endl;
+                // return CRef_Undef;
             } else {
                 assert(reason_ref != CRef_Undef);
                 const Clause& clause = ca[reason_ref];
@@ -1060,7 +1068,6 @@ CRef Solver::learntSP() {
     return CRef_Undef;
 
 }
-
 
 
 void Solver::sortSymClause(std::vector<Lit> &in, vec<Lit>& sp) {
