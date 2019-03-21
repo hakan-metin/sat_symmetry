@@ -21,7 +21,6 @@ enum CosyState {
     INACTIVE,
     ACTIVE,
     REDUCER,
-    FORCE_LEX_LEADER,
 };
 
 class CosyStatus {

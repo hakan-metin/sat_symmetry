@@ -24,7 +24,7 @@ LFLAGS    ?= -Wall
 
 COPTIMIZE ?= -O3
 
-CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -std=c++11
+CFLAGS    += -I$(MROOT) -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -std=c++17
 LFLAGS    += -lz -lcosy -lbliss -lsaucy
 
 .PHONY : s p d r rs clean

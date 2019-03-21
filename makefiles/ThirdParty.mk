@@ -1,8 +1,5 @@
 
-third_party: bliss saucy gtest
-
-gtest:
-	$(call cmd-call, ./scripts/build_gtest.sh)
+third_party: bliss saucy
 
 bliss:
 	$(MAKE) -C third_party/automorphism/bliss/ lib

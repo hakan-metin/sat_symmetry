@@ -1,20 +1,35 @@
 // Copyright 2017 Hakan Metin - LIP6
 
 #include "cosy/SymmetryFinder.h"
-#include "cosy/BlissSymmetryFinder.h"
-#include "cosy/SaucySymmetryFinder.h"
 
 namespace cosy {
 
-// static
-SymmetryFinder*
-SymmetryFinder::create(const CNFModel& model,
-                       SymmetryFinder::Automorphism tool) {
+
+void SymmetryFinder::findAutomorphism(const CNFModel& model,
+                                      SymmetryFinder::Automorphism tool,
+                                      Group *group) {
     switch (tool) {
-    case BLISS: return new BlissSymmetryFinder(model);
-    case SAUCY: return new SaucySymmetryFinder(model);
-    default: return nullptr;
+    case BLISS:
+        {
+            AutomorphismBuilder<BlissAutomorphismFinder,
+                                DoubleLiteralGraphNodeAdaptor> finder;
+            finder.findAutomorphisms(model, group);
+            _tool_name = "Bliss";
+        }
+        break;
+    case SAUCY:
+        {
+            AutomorphismBuilder<SaucyAutomorphismFinder,
+                                DoubleLiteralGraphNodeAdaptor> finder;
+            finder.findAutomorphisms(model, group);
+            _tool_name = "Saucy";
+        }
+        break;
+
+    default:
+        _tool_name = "null";
     }
 }
+
 
 }  // namespace cosy

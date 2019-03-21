@@ -57,8 +57,9 @@ class SymmetryController {
     CNFModel _cnf_model;
     Assignment _assignment;
     ClauseInjector _injector;
+    SymmetryFinder _symmetry_finder;
+
     std::unique_ptr<CosyManager> _cosy_manager;
-    std::unique_ptr<SymmetryFinder> _symmetry_finder;
 
     bool loadCNFProblem(const std::string cnf_filename);
     std::vector<T> adaptVector(const std::vector<Literal>& literals);
@@ -89,8 +90,7 @@ inline SymmetryController<T>::SymmetryController(
                            const std::string& sym_filename,
                            const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
-    _cosy_manager(nullptr),
-    _symmetry_finder(nullptr) {
+    _cosy_manager(nullptr) {
     bool success;
     SaucyReader sym_reader;
 
@@ -108,16 +108,11 @@ inline SymmetryController<T>::SymmetryController(
                             SymmetryFinder::Automorphism tool,
                             const std::unique_ptr<LiteralAdapter<T>>& adapter) :
     _literal_adapter(adapter),
-    _cosy_manager(nullptr),
-    _symmetry_finder(nullptr) {
+    _cosy_manager(nullptr) {
     if (!loadCNFProblem(cnf_filename))
         return;
 
-    _symmetry_finder = std::unique_ptr<SymmetryFinder>
-        (SymmetryFinder::create(_cnf_model, tool));
-
-    CHECK_NOTNULL(_symmetry_finder);
-    _symmetry_finder->findAutomorphism(&_group);
+    _symmetry_finder.findAutomorphism(_cnf_model, tool, &_group);
 }
 
 template<class T>
@@ -211,8 +206,7 @@ template<class T> inline void
 SymmetryController<T>::printInfo() const {
     _cnf_model.summarize();
     Printer::printSection(" Symmetry Information ");
-    if (_symmetry_finder)
-        _symmetry_finder->printStats();
+    _symmetry_finder.printStats();
     _group.summarize(_num_vars);
     if (_cosy_manager)
         _cosy_manager->summarize();
