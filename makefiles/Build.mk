@@ -13,6 +13,7 @@ lib := libcosy.a
 
 $(call REQUIRE-DIR, $(LIB)$(lib))
 $(call REQUIRE-DIR, $(BIN)test)
+$(call REQUIRE-DIR, $(BIN))
 $(call REQUIRE-DIR, $(objects))
 $(call REQUIRE-DIR, $(tests_objects))
 $(call REQUIRE-DEP, $(sources))
